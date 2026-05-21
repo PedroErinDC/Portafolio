@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0e14;
+  --color-bg-soft: #11161f;
+  --color-bg-elev: #161c28;
+  --color-border: #1f2733;
+  --color-border-strong: #2a3441;
+  --color-fg: #e6edf3;
+  --color-fg-muted: #97a3b6;
+  --color-fg-dim: #6b7689;
+  --color-accent: #34d399;
+  --color-accent-soft: #10b981;
+  --color-accent-glow: rgba(52, 211, 153, 0.18);
+  --color-violet: #a78bfa;
+  --color-amber: #fbbf24;
+  --color-rose: #fb7185;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(52, 211, 153, 0.10), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 90% 10%, rgba(167, 139, 250, 0.08), transparent 60%),
+      var(--color-bg);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  code, pre, .mono {
+    font-family: var(--font-mono);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  .container-page {
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .container-page {
+      padding-inline: 2rem;
+    }
+  }
+
+  .card {
+    background-color: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    transition: border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+  }
+
+  .card:hover {
+    border-color: var(--color-border-strong);
+    box-shadow: 0 0 0 1px var(--color-accent-glow), 0 20px 40px -20px rgba(0, 0, 0, 0.6);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: background-color 150ms ease, transform 100ms ease, border-color 150ms ease;
+    border: 1px solid var(--color-border-strong);
+    background-color: transparent;
+    color: var(--color-fg);
+  }
+
+  .btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+    border-color: var(--color-accent);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-accent-soft);
+    color: var(--color-bg);
+    border-color: var(--color-accent-soft);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    background-color: var(--color-bg-elev);
+    border: 1px solid var(--color-border);
+    color: var(--color-fg-muted);
+  }
+
+  .badge-accent {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background-color: var(--color-accent-glow);
+  }
+
+  .section {
+    padding-block: 5rem;
+  }
+
+  @media (min-width: 768px) {
+    .section {
+      padding-block: 7rem;
+    }
+  }
+
+  .section-title {
+    font-size: clamp(1.6rem, 2.5vw, 2.25rem);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-kicker {
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--color-fg) 0%, var(--color-accent) 60%, var(--color-violet) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 30px var(--color-accent-glow);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .grid-noise {
+    background-image:
+      linear-gradient(var(--color-border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: -1px -1px;
+    mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, black, transparent);
+  }
+}

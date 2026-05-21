@@ -1,0 +1,72 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProjectShell from '../../components/ProjectShell.astro';
+
+const lang = 'es' as const;
+const highlights = [
+  'Juego de plataformas 2D con seis niveles progresivos más un nivel final.',
+  'Mecánicas implementadas en C#: movimiento, salto, colisiones, enemigos básicos y triggers de nivel.',
+  'Gestión de escenas y persistencia entre niveles (estado del jugador, puntuación).',
+  'Diseño de escenarios en el editor de Unity con tilemaps y physics 2D.',
+  'Proyecto realizado como entrega académica en la UNAM.',
+];
+---
+
+<Layout title="Juego Unity — Pedro Erin Diaz Cumes" lang={lang}>
+  <ProjectShell
+    lang={lang}
+    title="Juego Educativo — Unity"
+    summary="Videojuego de plataformas con múltiples niveles desarrollado en Unity y C# como proyecto académico durante la licenciatura en la UNAM."
+    tags={['Unity', 'C#', '2D', 'Game Design', 'Physics 2D', 'Tilemap']}
+    year="2023"
+    role="Desarrollador"
+    backHref="/escuela"
+    category="school"
+  >
+    <div slot="demo" class="card p-8 md:p-10">
+      <div class="aspect-video bg-[color:var(--color-bg-elev)] rounded-lg border border-dashed border-[color:var(--color-border-strong)] flex flex-col items-center justify-center text-center px-6">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-[color:var(--color-fg-dim)] mb-4">
+          <polygon points="23 7 16 12 23 17 23 7"></polygon>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+        </svg>
+        <p class="font-mono text-sm text-[color:var(--color-fg-muted)] mb-1">Gameplay coming soon</p>
+        <p class="text-xs text-[color:var(--color-fg-dim)] max-w-md">Próximamente: video de gameplay y capturas de los niveles. Para probar el juego se publicará build descargable.</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+        {[1, 2, 3, 4].map((n) => (
+          <div class="aspect-video bg-[color:var(--color-bg-elev)] rounded-lg border border-dashed border-[color:var(--color-border)] flex items-center justify-center">
+            <span class="font-mono text-xs text-[color:var(--color-fg-dim)]">screenshot · nivel {n}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <ul slot="highlights" class="space-y-3">
+      {highlights.map((h) => (
+        <li class="flex items-start gap-3">
+          <span class="mt-2 inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-violet)] flex-shrink-0"></span>
+          <span class="text-sm md:text-base text-[color:var(--color-fg-muted)] leading-relaxed">{h}</span>
+        </li>
+      ))}
+    </ul>
+
+    <div slot="architecture" class="grid md:grid-cols-3 gap-4">
+      <div class="card p-5">
+        <p class="font-mono text-xs text-[color:var(--color-violet)] mb-2">// engine</p>
+        <p class="text-sm font-medium mb-1">Unity</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)]">2D core, tilemap, physics 2D</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-mono text-xs text-[color:var(--color-violet)] mb-2">// código</p>
+        <p class="text-sm font-medium mb-1">C# scripts</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)]">Player controller, level manager, triggers</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-mono text-xs text-[color:var(--color-violet)] mb-2">// niveles</p>
+        <p class="text-sm font-medium mb-1">7 escenas</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)]">6 niveles progresivos + nivel final</p>
+      </div>
+    </div>
+  </ProjectShell>
+</Layout>

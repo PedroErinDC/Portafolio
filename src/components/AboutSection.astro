@@ -1,0 +1,39 @@
+---
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<section id="about" class="section">
+  <div class="container-page grid lg:grid-cols-[1fr_2fr] gap-10 lg:gap-16 items-start">
+    <div>
+      <p class="section-kicker">{t('about.kicker')}</p>
+      <h2 class="section-title">{t('about.title')}</h2>
+    </div>
+    <div class="space-y-6">
+      <p class="text-base md:text-lg text-[color:var(--color-fg-muted)] leading-relaxed">
+        {t('about.body')}
+      </p>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+        <div class="card p-4">
+          <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-1">// edu</p>
+          <p class="text-sm font-medium">UNAM · FCA</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">Lic. Informática · 2020–2024</p>
+        </div>
+        <div class="card p-4">
+          <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-1">// role</p>
+          <p class="text-sm font-medium">Software Engineer</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">AI & Full-Stack</p>
+        </div>
+        <div class="card p-4">
+          <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-1">// since</p>
+          <p class="text-sm font-medium">Abril 2025</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">Celestial Dynamics</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

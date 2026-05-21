@@ -1,0 +1,17 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import ProjectsSection from '../../../components/ProjectsSection.astro';
+
+const lang = 'en' as const;
+---
+
+<Layout title="Work — Pedro Erin Diaz Cumes" lang={lang}>
+  <div class="container-page pt-16 pb-6">
+    <p class="section-kicker">Work experience</p>
+    <h1 class="text-3xl md:text-5xl font-semibold mb-4 text-balance">Professional projects</h1>
+    <p class="text-base md:text-lg text-[color:var(--color-fg-muted)] max-w-2xl text-balance">
+      Production systems built at Celestial Dynamics and other teams. Focus on computer vision, edge AI and full-stack.
+    </p>
+  </div>
+  <ProjectsSection lang={lang} />
+</Layout>

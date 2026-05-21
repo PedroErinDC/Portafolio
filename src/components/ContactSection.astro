@@ -1,0 +1,35 @@
+---
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<section id="contact" class="section">
+  <div class="container-page">
+    <p class="section-kicker">{t('contact.kicker')}</p>
+    <h2 class="section-title">{t('contact.title')}</h2>
+    <p class="text-[color:var(--color-fg-muted)] max-w-2xl mb-10">{t('contact.body')}</p>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <a href="mailto:erindiaz1005@gmail.com" class="card p-5 group">
+        <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-2">// {t('contact.email')}</p>
+        <p class="text-sm font-medium break-all group-hover:text-[color:var(--color-accent)] transition-colors">erindiaz1005@gmail.com</p>
+      </a>
+      <a href="https://github.com/" target="_blank" rel="noopener" class="card p-5 group">
+        <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-2">// {t('contact.github')}</p>
+        <p class="text-sm font-medium group-hover:text-[color:var(--color-accent)] transition-colors">github.com/pendiente</p>
+      </a>
+      <a href="https://linkedin.com/" target="_blank" rel="noopener" class="card p-5 group">
+        <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-2">// {t('contact.linkedin')}</p>
+        <p class="text-sm font-medium group-hover:text-[color:var(--color-accent)] transition-colors">linkedin.com/in/pendiente</p>
+      </a>
+      <div class="card p-5">
+        <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-2">// {t('contact.location')}</p>
+        <p class="text-sm font-medium">CDMX, México</p>
+      </div>
+    </div>
+  </div>
+</section>

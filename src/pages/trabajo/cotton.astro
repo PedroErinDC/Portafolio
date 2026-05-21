@@ -1,0 +1,95 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProjectShell from '../../components/ProjectShell.astro';
+import CottonDemo from '../../components/CottonDemo.astro';
+
+const lang = 'es' as const;
+const highlights = [
+  'Detección de pallets y conteo automático de sacos con YOLO11-seg + RF-DETR sobre segmentación ROI.',
+  'Pipeline de inferencia optimizado con NVIDIA TensorRT (FP16) sobre Jetson Nano, latencia <50ms por frame.',
+  'Dashboard operativo en React 19 + TypeScript con streaming HLS de baja latencia para visualización en tiempo real.',
+  'Backend con Node.js 22 + tRPC + Drizzle ORM sobre MySQL para gestión de inventario industrial.',
+  'Sistema de alertas automático y generación de QR codes para pallets completos.',
+  'Soporte simultáneo para 4 cámaras IP (RTSP) con conversión a HLS, expandible.',
+];
+---
+
+<Layout title="Cotton — Pedro Erin Diaz Cumes" lang={lang}>
+  <ProjectShell
+    lang={lang}
+    title="Cotton — Monitoreo CCTV Industrial"
+    summary="Sistema integral de visión computacional para CEDIS. Detecta pallets y cuenta sacos en tiempo real sobre hardware edge (Jetson Nano), reduciendo costos operativos del monitoreo manual."
+    tags={['YOLO11-seg', 'RF-DETR', 'TensorRT FP16', 'CUDA', 'Jetson Nano', 'React 19', 'TypeScript', 'tRPC', 'Drizzle ORM', 'MySQL', 'Docker', 'HLS']}
+    year="2025"
+    role="Software Engineer · IA & Full-Stack"
+    backHref="/trabajo"
+    category="work"
+  >
+    <CottonDemo slot="demo" lang={lang} />
+
+    <ul slot="highlights" class="space-y-3">
+      {highlights.map((h) => (
+        <li class="flex items-start gap-3">
+          <span class="mt-2 inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+          <span class="text-sm md:text-base text-[color:var(--color-fg-muted)] leading-relaxed">{h}</span>
+        </li>
+      ))}
+    </ul>
+
+    <div slot="architecture" class="space-y-6">
+      <div class="card p-5 md:p-6">
+        <pre class="font-mono text-xs md:text-sm leading-relaxed overflow-x-auto text-[color:var(--color-fg-muted)]"><code>{`┌─────────────────────────────────────────────────────────────┐
+│                    EDGE (Jetson Nano 4GB)                   │
+│                                                             │
+│  4× RTSP ──▶ ffmpeg ──▶ frame buffer                        │
+│                            │                                │
+│                            ▼                                │
+│  ┌─────────────────────────────────────────┐                │
+│  │  Inference engine                       │                │
+│  │  ├─ YOLO11-seg (pallets, ROI segm.)     │                │
+│  │  ├─ RF-DETR (sacos, conteo)             │                │
+│  │  └─ TensorRT FP16 + CUDA                │                │
+│  └─────────────────────────────────────────┘                │
+│                            │                                │
+│                            ▼                                │
+│  HLS muxer (low-latency segments)                           │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       SERVIDOR                              │
+│                                                             │
+│  Node.js 22 + tRPC ──▶ Drizzle ORM ──▶ MySQL                │
+│       │                                                     │
+│       ├─ alertas, QR codes pallets completos                │
+│       └─ WebSockets eventos en tiempo real                  │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  FRONTEND (React 19 + TS)                   │
+│                                                             │
+│  Dashboard 4-cam · HLS player · inventario · alertas        │
+└─────────────────────────────────────────────────────────────┘`}</code></pre>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="card p-5">
+          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// edge</p>
+          <p class="text-sm font-medium mb-1">Jetson Nano 4GB</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">CUDA, TensorRT FP16, Docker, ffmpeg</p>
+        </div>
+        <div class="card p-5">
+          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// servidor</p>
+          <p class="text-sm font-medium mb-1">Node.js 22 · tRPC</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">Drizzle ORM, MySQL, WebSockets</p>
+        </div>
+        <div class="card p-5">
+          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// frontend</p>
+          <p class="text-sm font-medium mb-1">React 19 + TS</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">HLS.js, Tailwind, dashboard tiempo real</p>
+        </div>
+      </div>
+    </div>
+  </ProjectShell>
+</Layout>

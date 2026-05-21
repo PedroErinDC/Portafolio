@@ -1,0 +1,169 @@
+---
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isES = lang === 'es';
+---
+
+<div class="card overflow-hidden">
+  <div class="p-5 md:p-6 border-b border-[color:var(--color-border)]">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <p class="font-mono text-xs text-[color:var(--color-accent)] mb-1">// {t('project.tags.demo')}</p>
+        <h3 class="text-lg font-semibold">{t('publicvector.demoTitle')}</h3>
+      </div>
+      <span class="badge badge-accent">
+        <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
+        {isES ? 'BÚSQUEDA SEMÁNTICA' : 'SEMANTIC SEARCH'}
+      </span>
+    </div>
+    <p class="text-sm text-[color:var(--color-fg-muted)] mt-2 max-w-2xl">{t('publicvector.demoDesc')}</p>
+  </div>
+
+  <div class="p-5 md:p-6 space-y-4">
+    <div class="relative">
+      <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--color-fg-dim)]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input
+        id="pv-search"
+        type="text"
+        placeholder={isES ? 'Buscar menciones... (ej: presidente, economía, deportes)' : 'Search mentions... (e.g., president, economy, sports)'}
+        class="w-full pl-12 pr-4 py-3 bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)] rounded-xl text-sm focus:outline-none focus:border-[color:var(--color-accent)] transition-colors font-mono"
+      />
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <button class="badge pv-suggest hover:badge-accent" data-q="presidente">presidente</button>
+      <button class="badge pv-suggest hover:badge-accent" data-q="economía">economía</button>
+      <button class="badge pv-suggest hover:badge-accent" data-q="deportes">deportes</button>
+      <button class="badge pv-suggest hover:badge-accent" data-q="seguridad">seguridad</button>
+      <button class="badge pv-suggest hover:badge-accent" data-q="elecciones">elecciones</button>
+    </div>
+
+    <div class="flex items-center justify-between text-xs font-mono text-[color:var(--color-fg-dim)] pt-2">
+      <span id="pv-stats">{isES ? 'Mostrando' : 'Showing'}: 0</span>
+      <span class="inline-flex items-center gap-1.5">
+        <span class="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)]"></span>
+        BGE-M3 · Milvus · Qwen2.5
+      </span>
+    </div>
+
+    <div id="pv-results" class="space-y-3 max-h-[480px] overflow-y-auto pr-1"></div>
+  </div>
+</div>
+
+<script>
+  type Mention = {
+    id: string;
+    channel: string;
+    type: 'TV' | 'Radio';
+    date: string;
+    time: string;
+    keyword: string;
+    snippet: string;
+    sentiment: 'positivo' | 'negativo' | 'neutral';
+    score: number;
+  };
+
+  const mentions: Mention[] = [
+    { id: 'M-9821', channel: 'Canal 11', type: 'TV', date: '2026-05-12', time: '19:32', keyword: 'presidente', snippet: 'El presidente anunció hoy la nueva política económica que entrará en vigor el próximo mes...', sentiment: 'neutral', score: 0.94 },
+    { id: 'M-9822', channel: 'Radio Centro', type: 'Radio', date: '2026-05-12', time: '08:15', keyword: 'economía', snippet: 'La economía mexicana muestra señales de recuperación según el último informe del Banco de México.', sentiment: 'positivo', score: 0.91 },
+    { id: 'M-9823', channel: 'TV Azteca', type: 'TV', date: '2026-05-11', time: '21:05', keyword: 'deportes', snippet: 'En deportes, el equipo nacional consigue una victoria contundente frente a su rival.', sentiment: 'positivo', score: 0.88 },
+    { id: 'M-9824', channel: 'Imagen Radio', type: 'Radio', date: '2026-05-11', time: '14:48', keyword: 'seguridad', snippet: 'Aumenta la preocupación por la seguridad pública en varias entidades del país.', sentiment: 'negativo', score: 0.86 },
+    { id: 'M-9825', channel: 'Foro TV', type: 'TV', date: '2026-05-10', time: '22:18', keyword: 'elecciones', snippet: 'Las próximas elecciones intermedias marcarán el rumbo del próximo trienio legislativo.', sentiment: 'neutral', score: 0.92 },
+    { id: 'M-9826', channel: 'Canal 11', type: 'TV', date: '2026-05-10', time: '13:42', keyword: 'presidente', snippet: 'El presidente sostuvo una reunión bilateral con su contraparte canadiense esta mañana.', sentiment: 'neutral', score: 0.89 },
+    { id: 'M-9827', channel: 'W Radio', type: 'Radio', date: '2026-05-09', time: '07:20', keyword: 'economía', snippet: 'Analistas advierten sobre la volatilidad económica frente al cierre del trimestre.', sentiment: 'negativo', score: 0.83 },
+    { id: 'M-9828', channel: 'ESPN', type: 'TV', date: '2026-05-09', time: '20:00', keyword: 'deportes', snippet: 'Final cardiaca en deportes con goleada inesperada en el último minuto.', sentiment: 'positivo', score: 0.95 },
+    { id: 'M-9829', channel: 'Radio Fórmula', type: 'Radio', date: '2026-05-08', time: '16:55', keyword: 'seguridad', snippet: 'Reportes de seguridad indican un descenso del 12% en delitos de alto impacto.', sentiment: 'positivo', score: 0.81 },
+    { id: 'M-9830', channel: 'Foro TV', type: 'TV', date: '2026-05-08', time: '09:10', keyword: 'elecciones', snippet: 'Encuestas previas a las elecciones reflejan empate técnico entre los dos contendientes principales.', sentiment: 'neutral', score: 0.87 },
+  ];
+
+  const synonyms: Record<string, string[]> = {
+    presidente: ['mandatario', 'gobierno', 'ejecutivo'],
+    economía: ['mercado', 'inflación', 'PIB', 'financiero', 'banco'],
+    deportes: ['fútbol', 'equipo', 'victoria', 'partido', 'gol'],
+    seguridad: ['delito', 'crimen', 'pública', 'protección'],
+    elecciones: ['voto', 'comicios', 'candidato', 'encuestas'],
+  };
+
+  const input = document.getElementById('pv-search') as HTMLInputElement | null;
+  const resultsEl = document.getElementById('pv-results');
+  const statsEl = document.getElementById('pv-stats');
+
+  function sentimentColor(s: Mention['sentiment']) {
+    if (s === 'positivo') return 'var(--color-accent)';
+    if (s === 'negativo') return 'var(--color-rose)';
+    return 'var(--color-fg-muted)';
+  }
+
+  function highlight(text: string, q: string) {
+    if (!q) return text;
+    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')})`, 'gi');
+    return text.replace(re, '<mark style="background:var(--color-accent-glow);color:var(--color-accent);padding:1px 3px;border-radius:3px">$1</mark>');
+  }
+
+  function semanticScore(m: Mention, q: string): number {
+    if (!q) return 0;
+    const qLower = q.toLowerCase().trim();
+    if (m.keyword.toLowerCase().includes(qLower) || m.snippet.toLowerCase().includes(qLower)) return m.score;
+    for (const [k, syns] of Object.entries(synonyms)) {
+      if (syns.some((s) => s.toLowerCase().includes(qLower) || qLower.includes(s.toLowerCase()))) {
+        if (m.keyword === k) return m.score * 0.7;
+      }
+    }
+    return 0;
+  }
+
+  function render(q: string) {
+    if (!resultsEl || !statsEl) return;
+    const trimmed = q.trim();
+    let list: { m: Mention; rel: number }[];
+
+    if (!trimmed) {
+      list = mentions.map((m) => ({ m, rel: m.score }));
+    } else {
+      list = mentions
+        .map((m) => ({ m, rel: semanticScore(m, trimmed) }))
+        .filter((x) => x.rel > 0)
+        .sort((a, b) => b.rel - a.rel);
+    }
+
+    statsEl.textContent = `${trimmed ? (list.length + ' resultado' + (list.length === 1 ? '' : 's')) : (mentions.length + ' menciones recientes')}`;
+
+    if (list.length === 0) {
+      resultsEl.innerHTML = `<div class="text-sm text-[color:var(--color-fg-dim)] text-center py-8 font-mono">Sin resultados para "${trimmed}"</div>`;
+      return;
+    }
+
+    resultsEl.innerHTML = list.map(({ m, rel }) => `
+      <div class="card p-4 hover:border-[color:var(--color-accent)] transition-colors">
+        <div class="flex items-center justify-between mb-2 gap-2 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="badge ${m.type === 'TV' ? 'badge-accent' : ''}">${m.type}</span>
+            <span class="font-mono text-xs text-[color:var(--color-fg-muted)]">${m.channel}</span>
+          </div>
+          <span class="font-mono text-xs text-[color:var(--color-fg-dim)]">${m.date} · ${m.time}</span>
+        </div>
+        <p class="text-sm leading-relaxed mb-3 text-[color:var(--color-fg)]">${highlight(m.snippet, trimmed)}</p>
+        <div class="flex items-center justify-between text-xs font-mono">
+          <span style="color:${sentimentColor(m.sentiment)}">● ${m.sentiment}</span>
+          <span class="text-[color:var(--color-fg-dim)]">rel: ${rel.toFixed(2)}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  input?.addEventListener('input', (e) => render((e.target as HTMLInputElement).value));
+  document.querySelectorAll<HTMLButtonElement>('.pv-suggest').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (input) {
+        input.value = b.dataset.q ?? '';
+        render(input.value);
+      }
+    });
+  });
+
+  render('');
+</script>

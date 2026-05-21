@@ -1,0 +1,29 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+
+const lang = 'es' as const;
+---
+
+<Layout title="Escuela — Pedro Erin Diaz Cumes" lang={lang}>
+  <div class="container-page pt-16 pb-10">
+    <p class="section-kicker">Experiencia académica</p>
+    <h1 class="text-3xl md:text-5xl font-semibold mb-4 text-balance">Proyectos escolares</h1>
+    <p class="text-base md:text-lg text-[color:var(--color-fg-muted)] max-w-2xl text-balance mb-10">
+      Trabajos universitarios desarrollados durante la Licenciatura en Informática en la UNAM. Bases del aprendizaje técnico.
+    </p>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      <ProjectCard
+        title="Juego Educativo — Unity"
+        summary="Videojuego de plataformas con múltiples niveles desarrollado como proyecto escolar en Unity con C#."
+        href="/escuela/juego-unity"
+        tags={['Unity', 'C#', 'Game Design', '2D']}
+        year="2023"
+        role="Desarrollador"
+        category="school"
+        ctaLabel="Ver detalles"
+      />
+    </div>
+  </div>
+</Layout>

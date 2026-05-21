@@ -1,0 +1,91 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import ProjectShell from '../../../components/ProjectShell.astro';
+import PublicVectorDemo from '../../../components/PublicVectorDemo.astro';
+
+const lang = 'en' as const;
+const highlights = [
+  '24/7 IPTV channel recording with automatic 30-minute segmentation.',
+  'Multilingual transcription with Faster-Whisper large-v3, ~28MB per audio block.',
+  'Semantic search pipeline with BGE-M3 embeddings (1024-dim) over Milvus.',
+  'Context extraction and sentiment analysis with Qwen2.5-14B (28GB VRAM).',
+  'Microservices architecture in Java 17 + Spring Boot 3 and FastAPI, orchestrated with Redis Streams.',
+  'Next.js frontend with mentions dashboard, sentiment, channel/date filters and audio playback.',
+];
+---
+
+<Layout title="PublicVector — Pedro Erin Diaz Cumes" lang={lang}>
+  <ProjectShell
+    lang={lang}
+    title="PublicVector — Media Monitoring"
+    summary="Platform that monitors TV and Radio IPTV in real time. Transcribes with Whisper, searches mentions via semantic embeddings and extracts context with LLM. Fully local, no API usage cost."
+    tags={['Faster-Whisper', 'BGE-M3', 'Milvus', 'Qwen2.5-14B', 'Spring Boot 3', 'FastAPI', 'Redis Streams', 'PostgreSQL', 'Next.js', 'Java 17']}
+    year="2025"
+    role="Software Engineer · NLP & Backend"
+    backHref="/en/work"
+    category="work"
+  >
+    <PublicVectorDemo slot="demo" lang={lang} />
+
+    <ul slot="highlights" class="space-y-3">
+      {highlights.map((h) => (
+        <li class="flex items-start gap-3">
+          <span class="mt-2 inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+          <span class="text-sm md:text-base text-[color:var(--color-fg-muted)] leading-relaxed">{h}</span>
+        </li>
+      ))}
+    </ul>
+
+    <div slot="architecture" class="space-y-6">
+      <div class="card p-5 md:p-6">
+        <pre class="font-mono text-xs md:text-sm leading-relaxed overflow-x-auto text-[color:var(--color-fg-muted)]"><code>{`┌────────────────────────────────────────────────────────────────────┐
+│                       INFERENCE SERVER                             │
+│                                                                    │
+│  IPTV ──▶ ffmpeg 24/7 ──▶ .mp3 segments (30 min, ~28 MB)           │
+│                                  │                                 │
+│                                  ▼                                 │
+│  ┌───────────────────────────────────────────────────┐             │
+│  │  GPU pool (port :9021)                            │             │
+│  │  ├─ Whisper large-v3 (6 GB VRAM)                  │             │
+│  │  ├─ BGE-M3 embeddings (2 GB VRAM)                 │             │
+│  │  └─ Qwen2.5-14B context+sentiment (28 GB VRAM)    │             │
+│  └───────────────────────────────────────────────────┘             │
+│                                  │                                 │
+│                                  ▼                                 │
+│  PostgreSQL (text)   │   Milvus (1024-d vectors)   │  Redis (queue)│
+└────────────────────────┬───────────────────────────────────────────┘
+                         │
+                         ▼
+┌────────────────────────────────────────────────────────────────────┐
+│             MICROSERVICES (Java 17 + Spring Boot 3)                │
+│  ingest · transcribe · search · context · sentiment                │
+│  orchestrated by Redis Streams (async, high volume)                │
+└────────────────────────┬───────────────────────────────────────────┘
+                         │
+                         ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                  FRONTEND (Next.js · :3003)                        │
+│  Mentions dashboard · filters · audio · sentiment                  │
+└────────────────────────────────────────────────────────────────────┘`}</code></pre>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="card p-5">
+          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// ingest</p>
+          <p class="text-sm font-medium mb-1">FFmpeg + Whisper</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">IPTV capture, multilingual transcription</p>
+        </div>
+        <div class="card p-5">
+          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// search</p>
+          <p class="text-sm font-medium mb-1">BGE-M3 + Milvus</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">1024-dim embeddings, vector DB</p>
+        </div>
+        <div class="card p-5">
+          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// analysis</p>
+          <p class="text-sm font-medium mb-1">Qwen2.5-14B</p>
+          <p class="text-xs text-[color:var(--color-fg-muted)]">Per-mention context and sentiment</p>
+        </div>
+      </div>
+    </div>
+  </ProjectShell>
+</Layout>

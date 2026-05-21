@@ -1,0 +1,92 @@
+---
+import ProjectCard from './ProjectCard.astro';
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isES = lang === 'es';
+
+const work = [
+  {
+    title: 'Cotton — CEDIS Monitoring',
+    summary: isES
+      ? 'CCTV industrial con detección de pallets y conteo de sacos sobre Jetson Nano. YOLO11-seg + RF-DETR + TensorRT.'
+      : 'Industrial CCTV with pallet detection and sack counting on Jetson Nano. YOLO11-seg + RF-DETR + TensorRT.',
+    href: isES ? '/trabajo/cotton' : '/en/work/cotton',
+    tags: ['YOLO11', 'TensorRT', 'Jetson Nano', 'React 19', 'tRPC'],
+    year: '2025',
+    role: isES ? 'Software Engineer' : 'Software Engineer',
+  },
+  {
+    title: 'PublicVector — Media Monitoring',
+    summary: isES
+      ? 'Monitoreo TV/Radio 24/7 con transcripción Whisper, búsqueda semántica Milvus y análisis con Qwen2.5.'
+      : 'TV/Radio 24/7 monitoring with Whisper transcription, Milvus semantic search and Qwen2.5 analysis.',
+    href: isES ? '/trabajo/publicvector' : '/en/work/publicvector',
+    tags: ['Whisper', 'Milvus', 'Qwen2.5', 'Spring Boot 3', 'FastAPI'],
+    year: '2025',
+    role: isES ? 'Software Engineer' : 'Software Engineer',
+  },
+];
+
+const school = [
+  {
+    title: isES ? 'Juego Educativo — Unity' : 'Educational Game — Unity',
+    summary: isES
+      ? 'Plataformero con múltiples niveles desarrollado en C# y Unity como proyecto académico en la UNAM.'
+      : 'Multi-level platformer built in C# and Unity as an academic project at UNAM.',
+    href: isES ? '/escuela/juego-unity' : '/en/school/unity-game',
+    tags: ['Unity', 'C#', 'Game Design', '2D'],
+    year: '2023',
+    role: isES ? 'Desarrollador' : 'Developer',
+  },
+];
+---
+
+<section id="work" class="section">
+  <div class="container-page">
+    <p class="section-kicker">{t('sections.work.kicker')}</p>
+    <h2 class="section-title">{t('sections.work.title')}</h2>
+    <p class="text-[color:var(--color-fg-muted)] mb-10 max-w-2xl">{t('sections.work.subtitle')}</p>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      {work.map((p) => (
+        <ProjectCard
+          title={p.title}
+          summary={p.summary}
+          href={p.href}
+          tags={p.tags}
+          year={p.year}
+          role={p.role}
+          category="work"
+          ctaLabel={t('project.viewDetails')}
+        />
+      ))}
+    </div>
+  </div>
+</section>
+
+<section id="school" class="section">
+  <div class="container-page">
+    <p class="section-kicker">{t('sections.school.kicker')}</p>
+    <h2 class="section-title">{t('sections.school.title')}</h2>
+    <p class="text-[color:var(--color-fg-muted)] mb-10 max-w-2xl">{t('sections.school.subtitle')}</p>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      {school.map((p) => (
+        <ProjectCard
+          title={p.title}
+          summary={p.summary}
+          href={p.href}
+          tags={p.tags}
+          year={p.year}
+          role={p.role}
+          category="school"
+          ctaLabel={t('project.viewDetails')}
+        />
+      ))}
+    </div>
+  </div>
+</section>
