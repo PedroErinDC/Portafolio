@@ -1,0 +1,109 @@
+---
+interface Props {
+  number?: string;        // kept for API compat, ignored
+  title: string;
+  subtitle?: string;
+  icon?: 'briefcase' | 'graduation';  // kept for API compat, ignored
+  accentColor?: string;
+}
+
+const { title, subtitle, accentColor } = Astro.props;
+---
+
+<header
+  class="section-header relative flex items-center gap-4 md:gap-6 mb-6 mt-2"
+  style={accentColor ? `--section-accent: ${accentColor}` : ''}
+>
+  <div class="shrink-0 max-w-[60%] md:max-w-none">
+    <h2 class="section-header__title gradient-text text-2xl md:text-3xl font-bold leading-tight tracking-tight">
+      {title}
+    </h2>
+    {subtitle && <p class="text-sm text-[color:var(--color-fg-muted)] mt-1">{subtitle}</p>}
+  </div>
+
+  <span class="section-header__line flex-1 relative h-2" aria-hidden="true">
+    <span class="section-header__track"></span>
+    <span class="section-header__draw">
+      <span class="section-header__dot"></span>
+    </span>
+  </span>
+</header>
+
+<style>
+  .section-header {
+    --section-accent: var(--color-accent);
+  }
+
+  /* Faint static rail so the path is suggested even before the dot reaches the end. */
+  .section-header__track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    transform: translateY(-50%);
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in srgb, var(--section-accent) 22%, transparent) 100%
+    );
+  }
+
+  /* The element whose width grows from 0 → 100%. It carries the dot at its right edge. */
+  .section-header__draw {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 1px;
+    width: 0%;
+    transform: translateY(-50%);
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--section-accent) 0%, transparent) 0%,
+      color-mix(in srgb, var(--section-accent) 70%, transparent) 60%,
+      var(--section-accent) 100%
+    );
+    animation: section-header-draw 4.5s cubic-bezier(0.65, 0.05, 0.36, 1) infinite;
+    will-change: width, opacity;
+  }
+
+  .section-header__dot {
+    position: absolute;
+    right: -7px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    transform: translateY(-50%) scale(1);
+    background: #fff;
+    box-shadow:
+      0 0 0 2px var(--section-accent),
+      0 0 10px var(--section-accent),
+      0 0 24px color-mix(in srgb, var(--section-accent) 70%, transparent),
+      0 0 48px color-mix(in srgb, var(--section-accent) 35%, transparent);
+    animation: section-header-dot-pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes section-header-draw {
+    0%   { width: 0%;   opacity: 0; }
+    6%   { width: 0%;   opacity: 1; }
+    72%  { width: 100%; opacity: 1; }
+    85%  { width: 100%; opacity: 1; }
+    96%  { width: 100%; opacity: 0; }
+    100% { width: 0%;   opacity: 0; }
+  }
+
+  @keyframes section-header-dot-pulse {
+    0%, 100% { transform: translateY(-50%) scale(1);   }
+    50%      { transform: translateY(-50%) scale(1.18); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .section-header__draw,
+    .section-header__dot {
+      animation: none;
+    }
+    .section-header__draw { width: 100%; opacity: 0.6; }
+    .section-header__dot { transform: translateY(-50%); }
+  }
+</style>

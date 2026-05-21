@@ -135,12 +135,12 @@
   }
 
   .section {
-    padding-block: 5rem;
+    padding-block: 3rem;
   }
 
   @media (min-width: 768px) {
     .section {
-      padding-block: 7rem;
+      padding-block: 4rem;
     }
   }
 
@@ -159,10 +159,30 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, var(--color-fg) 0%, var(--color-accent) 60%, var(--color-violet) 100%);
+    background: linear-gradient(
+      120deg,
+      var(--color-fg) 0%,
+      var(--color-accent) 25%,
+      var(--color-violet) 50%,
+      var(--color-accent) 75%,
+      var(--color-fg) 100%
+    );
+    background-size: 250% 100%;
+    background-position: 0% 50%;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    animation: gradient-flow 7s ease-in-out infinite;
+  }
+
+  @keyframes gradient-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gradient-text { animation: none; }
   }
 
   .hover-glow:hover {

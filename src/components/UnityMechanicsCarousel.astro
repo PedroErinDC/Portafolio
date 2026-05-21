@@ -1,0 +1,503 @@
+---
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const isES = lang === 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// Add new mechanics here. The carousel auto-adapts.
+type Mechanic = {
+  id: string;
+  title_es: string;
+  title_en: string;
+  desc_es: string;
+  desc_en: string;
+  file: string;           // under /demos/unity/
+  level?: string;          // optional badge (Nivel 2, Boss, etc.)
+  tag_es?: string;
+  tag_en?: string;
+};
+
+const mechanics: Mechanic[] = [
+  {
+    id: 'guias',
+    title_es: 'Guías de ayuda en pantalla',
+    title_en: 'On-screen help hints',
+    desc_es: 'Indicadores contextuales que aparecen para enseñar controles, objetivos y mecánicas avanzadas en momentos clave del nivel. Reducen la curva de aprendizaje sin interrumpir el flujo del juego.',
+    desc_en: 'Contextual hints that appear to teach controls, objectives and advanced mechanics at key moments of the level. Reduce the learning curve without breaking flow.',
+    file: 'mec-guias.mp4',
+    tag_es: 'onboarding',
+    tag_en: 'onboarding',
+  },
+  {
+    id: 'salto-monedas-vidas',
+    title_es: 'Salto, monedas y vidas extra',
+    title_en: 'Jump, coins & extra lives',
+    desc_es: 'Salto con física 2D y recolección por trigger de dos tipos de ítems: monedas que suman al puntaje y vidas que aumentan el contador del jugador. Ambos ítems detectados con Box Colliders en modo trigger y persistidos en el singleton del GameManager.',
+    desc_en: '2D-physics jump combined with trigger-based pickups of two item types: coins that add to the score and life pickups that increase the player counter. Both detected with Box Colliders in trigger mode and persisted in the GameManager singleton.',
+    file: 'mec-salto-monedas-vidas.mp4',
+    tag_es: 'recolección',
+    tag_en: 'pickups',
+  },
+  {
+    id: 'danio-invulnerabilidad',
+    title_es: 'Daño, vidas y frames de invulnerabilidad',
+    title_en: 'Damage, lives & invulnerability frames',
+    desc_es: 'Al contactar un enemigo, el personaje pierde una vida y entra en estado de invulnerabilidad: parpadea con transparencia por unos segundos y puede atravesar al enemigo sin recibir daño adicional. Evita muertes en cadena cuando el jugador queda atorado.',
+    desc_en: 'On enemy contact, the character loses a life and enters an invulnerability window: blinks with transparency for a few seconds and can pass through enemies without taking further damage. Prevents chained deaths when the player is cornered.',
+    file: 'mec-danio-invulnerabilidad.mp4',
+    tag_es: 'combate',
+    tag_en: 'combat',
+  },
+  {
+    id: 'trampas-trigger',
+    title_es: 'Trampas activadas por trigger',
+    title_en: 'Trigger-based traps',
+    desc_es: 'Zonas invisibles detectan el paso del personaje y disparan eventos: plataformas que se desploman o piedras que caen del techo. Implementadas con Box Colliders 2D en modo trigger conectados a scripts de spawn/destroy.',
+    desc_en: 'Invisible zones detect when the player crosses them and trigger events: collapsing platforms or rocks falling from the ceiling. Implemented with Box Colliders 2D in trigger mode wired to spawn/destroy scripts.',
+    file: 'mec-trampas-trigger.mp4',
+    tag_es: 'trampas',
+    tag_en: 'traps',
+  },
+  {
+    id: 'checkpoints',
+    title_es: 'Checkpoints y respawn',
+    title_en: 'Checkpoints & respawn',
+    desc_es: 'Banderines distribuidos en el escenario marcan puntos de control. Al pasar uno queda como activo; si el personaje muere reaparece ahí en lugar de reiniciar el nivel completo. Estado persistido en un singleton del jugador entre escenas.',
+    desc_en: 'Flags placed across the stage mark checkpoints. Crossing one sets it as active; on death the player respawns there instead of restarting the full level. State persisted in a player singleton across scenes.',
+    file: 'mec-checkpoints.mp4',
+    tag_es: 'checkpoints',
+    tag_en: 'checkpoints',
+  },
+  {
+    id: 'escaleras-plataformas',
+    title_es: 'Escaleras y plataformas móviles',
+    title_en: 'Ladders & moving platforms',
+    desc_es: 'El personaje sube y baja por escaleras detectadas con triggers verticales (la gravedad y los controles se ajustan temporalmente). Las plataformas móviles patrullan rutas predefinidas y arrastran al jugador encima mediante parenting temporal del transform.',
+    desc_en: 'The character climbs up and down ladders detected via vertical triggers (gravity and controls swap temporarily). Moving platforms patrol predefined paths and carry the player on top via temporary transform parenting.',
+    file: 'mec-escaleras-plataformas.mp4',
+    tag_es: 'movimiento',
+    tag_en: 'movement',
+  },
+  {
+    id: 'cinematicas',
+    title_es: 'Cinemáticas y secuencias scriptadas',
+    title_en: 'Cutscenes & scripted sequences',
+    desc_es: 'Momentos clave del juego donde el control pasa del jugador al sistema: introducciones, transiciones y diálogos. Implementadas con bloqueo temporal del input y coroutines en C# que encadenan animaciones y movimientos predefinidos del personaje.',
+    desc_en: 'Key story beats where control hands off from the player to the system: intros, transitions and dialogues. Built with temporary input lock and C# coroutines that chain animations and scripted character movement.',
+    file: 'mec-cinematicas.mp4',
+    tag_es: 'cinemática',
+    tag_en: 'cutscene',
+  },
+  {
+    id: 'trampas-autonomas',
+    title_es: 'Trampas autónomas con patrones rítmicos',
+    title_en: 'Autonomous traps with rhythmic patterns',
+    desc_es: 'Obstáculos activos que no dependen del jugador: armas que disparan en intervalos, pinchos que se ocultan y emergen a tiempos definidos, y grupos alternados donde unos aparecen mientras otros se esconden. Implementados con coroutines en C# y curvas de animación para ritmos predecibles que el jugador puede memorizar.',
+    desc_en: 'Active hazards that ignore the player: turrets that fire on intervals, spikes that hide and pop out at set beats, and alternating groups where some appear while others vanish. Built with C# coroutines and animation curves for predictable rhythms players can memorize.',
+    file: 'mec-trampas-autonomas.mp4',
+    tag_es: 'trampas activas',
+    tag_en: 'active traps',
+  },
+  {
+    id: 'powerups',
+    title_es: 'Power-ups por recolección de ítems',
+    title_en: 'Item-based power-ups',
+    desc_es: 'Al recoger ítems específicos el personaje desbloquea habilidades permanentes necesarias para avanzar en la aventura: aumento de velocidad de movimiento, capacidad de atacar enemigos y poder agacharse para esquivar proyectiles. Cada power-up activa un flag persistente en el script del jugador.',
+    desc_en: 'Picking specific items unlocks permanent abilities needed to progress through the adventure: faster movement, the ability to attack enemies and crouching to dodge projectiles. Each power-up sets a persistent flag in the player script.',
+    file: 'mec-powerups.mp4',
+    tag_es: 'habilidades',
+    tag_en: 'abilities',
+  },
+  {
+    id: 'habilidades-corte',
+    title_es: 'Habilidades implementadas que no entraron al juego final',
+    title_en: 'Implemented abilities cut from final build',
+    desc_es: 'Funcionalidades terminadas en código y prefabs que finalmente quedaron fuera del scope del entregable académico por tiempo de balanceo y diseño de niveles. Quedaron operativas y reutilizables para una futura versión extendida del juego.',
+    desc_en: 'Fully implemented features in code and prefabs that ended up cut from the academic delivery due to balancing and level-design time. They remain functional and reusable for a future extended build.',
+    file: 'mec-habilidades-corte.mp4',
+    tag_es: 'recortes',
+    tag_en: 'cut content',
+  },
+];
+---
+
+<div
+  class="card overflow-hidden umc"
+  id="umc-root"
+  data-count={mechanics.length}
+  data-active="0"
+>
+  <!-- Header -->
+  <div class="p-5 md:p-6 border-b border-[color:var(--color-border)]">
+    <div class="flex items-baseline justify-between flex-wrap gap-3">
+      <div>
+        <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-violet)] mb-1">// {isES ? 'mecánicas del juego' : 'game mechanics'}</p>
+        <h3 class="text-lg font-semibold">{isES ? 'Mecánicas y momentos clave' : 'Mechanics & key moments'}</h3>
+      </div>
+      <span class="font-mono text-[10px] text-[color:var(--color-fg-dim)]" id="umc-counter">1 / {mechanics.length}</span>
+    </div>
+    <p class="text-sm text-[color:var(--color-fg-muted)] mt-2 max-w-2xl">
+      {isES
+        ? 'Cada slide es un recorte del gameplay mostrando una mecánica implementada. El video completo está en el reproductor de arriba.'
+        : 'Each slide is a gameplay clip showcasing one implemented mechanic. The full playthrough is in the player above.'}
+    </p>
+  </div>
+
+  <!-- Carousel -->
+  <div class="umc-stage relative overflow-hidden" id="umc-stage">
+
+    <!-- Prev / Next buttons -->
+    {mechanics.length > 1 && (
+      <>
+        <button
+          type="button"
+          class="umc-nav umc-nav--prev"
+          aria-label={isES ? 'Anterior' : 'Previous'}
+          data-dir="-1"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button
+          type="button"
+          class="umc-nav umc-nav--next"
+          aria-label={isES ? 'Siguiente' : 'Next'}
+          data-dir="1"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </>
+    )}
+
+    <div class="umc-track" id="umc-track">
+      {mechanics.map((m, i) => (
+        <div class="umc-slide" data-idx={i}>
+          <div class="umc-frame">
+            <video
+              src={`${base}/demos/unity/${m.file}`}
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+              class="umc-video"
+            ></video>
+            {m.level && (
+              <span class="umc-badge umc-badge--level">{m.level}</span>
+            )}
+            {(isES ? m.tag_es : m.tag_en) && (
+              <span class="umc-badge umc-badge--tag">{isES ? m.tag_es : m.tag_en}</span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <!-- Dots indicator -->
+  {mechanics.length > 1 && (
+    <div class="flex items-center justify-center gap-1.5 mt-4">
+      {mechanics.map((_, i) => (
+        <button
+          type="button"
+          class="umc-dot"
+          data-go={i}
+          aria-label={isES ? `Ir a slide ${i + 1}` : `Go to slide ${i + 1}`}
+        ></button>
+      ))}
+    </div>
+  )}
+
+  <!-- Details panel -->
+  <div class="px-5 md:px-6 pb-6 pt-2">
+    <div class="umc-details" id="umc-details">
+      {mechanics.map((m, i) => (
+        <div class="umc-detail" data-detail={i}>
+          <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-violet)] mb-1">{isES ? `mecánica · ${String(i + 1).padStart(2, '0')}` : `mechanic · ${String(i + 1).padStart(2, '0')}`}</p>
+          <h4 class="text-xl md:text-2xl font-semibold mb-2">{isES ? m.title_es : m.title_en}</h4>
+          <p class="text-sm md:text-base text-[color:var(--color-fg-muted)] leading-relaxed max-w-3xl">{isES ? m.desc_es : m.desc_en}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .umc-stage {
+    perspective: 1400px;
+    padding: 2rem 0 1.5rem;
+    min-height: 320px;
+  }
+
+  .umc-track {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    transform-style: preserve-3d;
+  }
+
+  .umc-slide {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(440px, 78%);
+    aspect-ratio: 16 / 9;
+    transform-origin: center center;
+    transition:
+      transform 520ms cubic-bezier(0.34, 1.18, 0.45, 1),
+      opacity 420ms ease;
+    will-change: transform, opacity;
+  }
+
+  /* Positions are computed via JS via custom prop --o (offset from active) */
+  .umc-slide {
+    --o: 0;
+    --abs-o: max(var(--o), calc(-1 * var(--o)));
+    transform:
+      translate(-50%, -50%)
+      translateX(calc(var(--o) * 56%))
+      translateZ(calc(var(--abs-o) * -180px))
+      rotateY(calc(var(--o) * -22deg))
+      scale(calc(1 - var(--abs-o) * 0.12));
+    opacity: calc(1 - var(--abs-o) * 0.35);
+    z-index: calc(100 - var(--abs-o));
+    pointer-events: none;
+  }
+
+  .umc-slide[data-active="true"] {
+    pointer-events: auto;
+    opacity: 1;
+    z-index: 200;
+  }
+
+  .umc-slide[data-far="true"] {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .umc-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--color-border);
+    box-shadow:
+      0 30px 60px -24px rgba(0, 0, 0, 0.7),
+      0 0 0 1px color-mix(in srgb, var(--color-violet) 18%, transparent);
+  }
+
+  .umc-slide[data-active="true"] .umc-frame {
+    box-shadow:
+      0 36px 70px -20px rgba(0, 0, 0, 0.8),
+      0 0 0 1px var(--color-violet),
+      0 0 0 6px color-mix(in srgb, var(--color-violet) 22%, transparent);
+  }
+
+  .umc-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .umc-badge {
+    position: absolute;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 8px;
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+  }
+
+  .umc-badge--level {
+    bottom: 10px;
+    right: 10px;
+    background: color-mix(in srgb, var(--color-violet) 28%, transparent);
+    color: var(--color-violet);
+    border: 1px solid color-mix(in srgb, var(--color-violet) 45%, transparent);
+  }
+
+  .umc-badge--tag {
+    bottom: 10px;
+    left: 10px;
+    background: rgba(10, 14, 20, 0.65);
+    color: var(--color-fg-muted);
+    border: 1px solid var(--color-border);
+  }
+
+  /* Nav buttons */
+  .umc-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 300;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--color-bg-elev);
+    border: 1px solid var(--color-border);
+    color: var(--color-fg-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 180ms ease, border-color 180ms ease, background 180ms ease, transform 180ms ease;
+  }
+  .umc-nav:hover {
+    color: var(--color-violet);
+    border-color: var(--color-violet);
+    transform: translateY(-50%) scale(1.05);
+  }
+  .umc-nav--prev { left: 12px;  }
+  .umc-nav--next { right: 12px; }
+
+  /* Dots */
+  .umc-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--color-border-strong);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background 200ms ease, width 250ms ease;
+  }
+  .umc-dot:hover { background: var(--color-fg-muted); }
+  .umc-dot.umc-dot--active {
+    background: var(--color-violet);
+    width: 20px;
+  }
+
+  /* Details swap */
+  .umc-details {
+    position: relative;
+    min-height: 140px;
+  }
+  .umc-detail {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 320ms ease, transform 320ms ease;
+  }
+  .umc-detail.umc-detail--active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* Mobile: tighter spacing, less 3D so side cards do not clip */
+  @media (max-width: 700px) {
+    .umc-stage { padding: 1.2rem 0 1rem; }
+    .umc-track { height: 200px; }
+    .umc-slide {
+      width: min(280px, 80%);
+    }
+    .umc-slide {
+      transform:
+        translate(-50%, -50%)
+        translateX(calc(var(--o) * 38%))
+        translateZ(calc(var(--abs-o) * -100px))
+        rotateY(calc(var(--o) * -16deg))
+        scale(calc(1 - var(--abs-o) * 0.18));
+    }
+    .umc-nav { width: 36px; height: 36px; }
+    .umc-nav--prev { left: 4px;  }
+    .umc-nav--next { right: 4px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .umc-slide, .umc-detail, .umc-nav { transition: none; }
+  }
+</style>
+
+<script>
+  const root      = document.getElementById('umc-root');
+  const track     = document.getElementById('umc-track');
+  const counter   = document.getElementById('umc-counter');
+  const slides    = Array.from(document.querySelectorAll<HTMLElement>('.umc-slide'));
+  const dots      = Array.from(document.querySelectorAll<HTMLButtonElement>('.umc-dot'));
+  const details   = Array.from(document.querySelectorAll<HTMLElement>('.umc-detail'));
+  const navBtns   = Array.from(document.querySelectorAll<HTMLButtonElement>('.umc-nav'));
+
+  const total = slides.length;
+  let active = 0;
+
+  function update() {
+    slides.forEach((s, i) => {
+      let offset = i - active;
+      // Wrap-around so carousel feels infinite when many slides.
+      if (total > 1) {
+        if (offset > total / 2)  offset -= total;
+        if (offset < -total / 2) offset += total;
+      }
+      s.style.setProperty('--o', String(offset));
+      s.dataset.active = String(i === active);
+      s.dataset.far    = String(Math.abs(offset) > 2);
+
+      // Only the active video plays — pause others to save resources.
+      const video = s.querySelector<HTMLVideoElement>('.umc-video');
+      if (video) {
+        if (i === active) {
+          video.currentTime = 0;
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      }
+    });
+
+    dots.forEach((d, i) => d.classList.toggle('umc-dot--active', i === active));
+    details.forEach((d, i) => d.classList.toggle('umc-detail--active', i === active));
+
+    if (counter) counter.textContent = `${active + 1} / ${total}`;
+    if (root) root.dataset.active = String(active);
+  }
+
+  function goTo(i: number) {
+    if (total === 0) return;
+    active = ((i % total) + total) % total;
+    update();
+  }
+
+  navBtns.forEach((b) => {
+    b.addEventListener('click', () => {
+      const dir = Number(b.dataset.dir ?? 1);
+      goTo(active + dir);
+    });
+  });
+
+  dots.forEach((d) => {
+    d.addEventListener('click', () => {
+      const idx = Number(d.dataset.go ?? 0);
+      goTo(idx);
+    });
+  });
+
+  // Swipe gestures on mobile
+  let touchStartX = 0;
+  let touchEndX = 0;
+  track?.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  track?.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    const delta = touchEndX - touchStartX;
+    if (Math.abs(delta) < 40) return;
+    goTo(active + (delta < 0 ? 1 : -1));
+  }, { passive: true });
+
+  // Keyboard
+  root?.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft')  goTo(active - 1);
+    if (e.key === 'ArrowRight') goTo(active + 1);
+  });
+
+  update();
+</script>

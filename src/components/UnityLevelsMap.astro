@@ -1,0 +1,393 @@
+---
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const isES = lang === 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+type Level = {
+  n: number;
+  title_es: string;
+  title_en: string;
+  desc_es: string;
+  desc_en: string;
+  file: string;
+  width: number;
+  height: number;
+  accent: string;          // CSS color for accent strip
+  tag_es: string;
+  tag_en: string;
+};
+
+const levels: Level[] = [
+  {
+    n: 1,
+    title_es: 'Bosque de inicio',
+    title_en: 'Starting forest',
+    desc_es: 'Recorrido lineal de izquierda a derecha donde se introducen las mecánicas básicas: salto, recolección de monedas y vidas extra. Sin enemigos todavía — diseñado como tutorial implícito para acomodar al jugador a los controles.',
+    desc_en: 'Linear left-to-right route introducing the core mechanics: jump, coin pickups and extra-life pickups. No enemies yet — designed as an implicit tutorial to get the player comfortable with the controls.',
+    file: 'nivel-1.png',
+    width: 2173,
+    height: 354,
+    accent: 'var(--color-accent)',
+    tag_es: 'tutorial',
+    tag_en: 'tutorial',
+  },
+  {
+    n: 2,
+    title_es: 'Montañas y precipicios',
+    title_en: 'Mountains & cliffs',
+    desc_es: 'Verticalidad creciente con escaleras, plataformas móviles y trampas activadas por trigger. Aparecen los primeros enemigos terrestres y los primeros checkpoints, introduciendo el manejo de altura y combate como variables de diseño.',
+    desc_en: 'Growing verticality with ladders, moving platforms and trigger-based traps. First ground enemies and first checkpoints appear, introducing height and combat as design variables.',
+    file: 'nivel-2.png',
+    width: 2176,
+    height: 205,
+    accent: 'var(--color-violet)',
+    tag_es: 'verticalidad',
+    tag_en: 'verticality',
+  },
+  {
+    n: 3,
+    title_es: 'Templo final',
+    title_en: 'Final temple',
+    desc_es: 'Nivel más largo y denso: trampas autónomas con patrones rítmicos, enemigos que persiguen al jugador, power-ups permanentes necesarios para avanzar y el cierre de la aventura.',
+    desc_en: 'Longest and densest level: autonomous traps with rhythmic patterns, chasing enemies, permanent power-ups required to progress, and the adventure finale.',
+    file: 'nivel-3.png',
+    width: 2128,
+    height: 148,
+    accent: '#fb7185',
+    tag_es: 'boss',
+    tag_en: 'boss',
+  },
+];
+---
+
+<section class="card overflow-hidden ulm">
+
+  <header class="p-5 md:p-6 border-b border-[color:var(--color-border)]">
+    <div class="flex items-baseline justify-between flex-wrap gap-3">
+      <div>
+        <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-violet)] mb-1">// {isES ? 'mapa de niveles' : 'level map'}</p>
+        <h3 class="text-lg font-semibold">{isES ? 'Diseño y recorrido completo de cada nivel' : 'Full design and route of each level'}</h3>
+      </div>
+      <span class="font-mono text-[10px] text-[color:var(--color-fg-dim)]">{levels.length} {isES ? 'niveles' : 'levels'}</span>
+    </div>
+    <p class="text-sm text-[color:var(--color-fg-muted)] mt-2 max-w-2xl">
+      {isES
+        ? 'Cada imagen muestra el recorrido panorámico que hace el personaje del inicio al final del nivel. Arrastra horizontalmente para explorar todo el escenario.'
+        : 'Each image shows the full panoramic route from start to finish. Drag horizontally to explore the whole stage.'}
+    </p>
+  </header>
+
+  <div class="p-5 md:p-6 space-y-6">
+    {levels.map((lvl) => (
+      <article class="ulm-level group" style={`--accent: ${lvl.accent}`}>
+        <!-- Header row -->
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div class="flex items-center gap-3">
+            <span class="ulm-num">{String(lvl.n).padStart(2, '0')}</span>
+            <div>
+              <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-fg-dim)] mb-0.5">{isES ? `nivel ${lvl.n}` : `level ${lvl.n}`}</p>
+              <h4 class="text-base md:text-lg font-semibold leading-tight">{isES ? lvl.title_es : lvl.title_en}</h4>
+            </div>
+          </div>
+          <span class="ulm-tag font-mono text-[10px] uppercase tracking-widest">{isES ? lvl.tag_es : lvl.tag_en}</span>
+        </div>
+
+        <p class="text-sm text-[color:var(--color-fg-muted)] leading-relaxed mb-4 max-w-3xl">
+          {isES ? lvl.desc_es : lvl.desc_en}
+        </p>
+
+        <!-- Scrollable image stage -->
+        <div class="ulm-stage" data-level={lvl.n}>
+          <div class="ulm-scroll" tabindex="0" aria-label={isES ? `Recorrido del nivel ${lvl.n}` : `Level ${lvl.n} route`}>
+            <img
+              src={`${base}/demos/unity/levels/${lvl.file}`}
+              alt={isES ? `Mapa del nivel ${lvl.n}` : `Level ${lvl.n} map`}
+              width={lvl.width}
+              height={lvl.height}
+              loading="lazy"
+              decoding="async"
+              class="ulm-img"
+            />
+          </div>
+
+          <!-- Edge fade indicators -->
+          <span class="ulm-fade ulm-fade--left"  aria-hidden="true"></span>
+          <span class="ulm-fade ulm-fade--right" aria-hidden="true"></span>
+
+          <!-- Scroll hint chip -->
+          <span class="ulm-hint" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <span>{isES ? 'arrastra' : 'drag'}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+
+          <!-- Progress dots at bottom: start / mid / finish -->
+          <div class="ulm-route" aria-hidden="true">
+            <span class="ulm-route__dot ulm-route__dot--start">
+              <span class="ulm-route__label">start</span>
+            </span>
+            <span class="ulm-route__line"></span>
+            <span class="ulm-route__dot ulm-route__dot--finish">
+              <span class="ulm-route__label">finish</span>
+            </span>
+          </div>
+        </div>
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .ulm-level {
+    position: relative;
+    padding: 1rem;
+    border-radius: 14px;
+    background: var(--color-bg-elev);
+    border: 1px solid var(--color-border);
+    transition: border-color 250ms ease, box-shadow 250ms ease;
+  }
+  .ulm-level:hover {
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent),
+                0 20px 40px -22px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .ulm-num {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-weight: 700;
+    font-size: 1.4rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    flex-shrink: 0;
+  }
+
+  .ulm-tag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  /* Stage: container with relative for fade overlays */
+  .ulm-stage {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.03),
+      0 12px 28px -16px rgba(0,0,0,0.7);
+  }
+
+  .ulm-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Smooth & momentum scroll on touch */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    cursor: grab;
+  }
+  .ulm-scroll:active { cursor: grabbing; }
+
+  /* Slim scrollbar */
+  .ulm-scroll::-webkit-scrollbar { height: 8px; }
+  .ulm-scroll::-webkit-scrollbar-track { background: transparent; }
+  .ulm-scroll::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: 999px;
+  }
+  .ulm-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+
+  .ulm-img {
+    display: block;
+    height: clamp(160px, 18vw, 280px);
+    width: auto;
+    max-width: none;
+    image-rendering: pixelated;        /* keep pixel art crisp */
+    image-rendering: -moz-crisp-edges;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* Fade gradients on left/right to indicate scroll */
+  .ulm-fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 240ms ease;
+  }
+  .ulm-fade--left {
+    left: 0;
+    background: linear-gradient(to right, var(--color-bg-elev) 0%, transparent 100%);
+    opacity: 0;
+  }
+  .ulm-fade--right {
+    right: 0;
+    background: linear-gradient(to left, var(--color-bg-elev) 0%, transparent 100%);
+    opacity: 1;
+  }
+
+  /* Hint chip floats over the stage */
+  .ulm-hint {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(10, 14, 20, 0.75);
+    backdrop-filter: blur(6px);
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    z-index: 3;
+    pointer-events: none;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    animation: ulm-hint-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes ulm-hint-pulse {
+    0%, 100% { opacity: 0.65; transform: translateX(-50%) scale(1); }
+    50%      { opacity: 1;    transform: translateX(-50%) scale(1.04); }
+  }
+
+  /* Bottom start/finish route indicator */
+  .ulm-route {
+    position: absolute;
+    bottom: 10px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .ulm-route__line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(to right,
+      color-mix(in srgb, var(--accent) 70%, transparent) 0%,
+      color-mix(in srgb, var(--accent) 25%, transparent) 50%,
+      color-mix(in srgb, var(--accent) 70%, transparent) 100%);
+    border-radius: 999px;
+  }
+  .ulm-route__dot {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent),
+                0 0 8px var(--accent);
+  }
+  .ulm-route__dot--finish {
+    background: #fff;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent),
+                0 0 10px #fff;
+  }
+  .ulm-route__label {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-fg-dim);
+    background: rgba(10, 14, 20, 0.75);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  /* Mobile: smaller hint + tighter padding */
+  @media (max-width: 640px) {
+    .ulm-level { padding: 0.85rem; }
+    .ulm-num { width: 2rem; height: 2rem; font-size: 1.1rem; }
+    .ulm-hint { font-size: 9px; padding: 3px 7px; }
+    .ulm-route__label { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ulm-hint, .ulm-scroll { animation: none; scroll-behavior: auto; }
+  }
+</style>
+
+<script>
+  // Drag-to-scroll + fade indicator update
+  document.querySelectorAll<HTMLElement>('.ulm-stage').forEach((stage) => {
+    const scroll  = stage.querySelector<HTMLElement>('.ulm-scroll');
+    const fadeL   = stage.querySelector<HTMLElement>('.ulm-fade--left');
+    const fadeR   = stage.querySelector<HTMLElement>('.ulm-fade--right');
+    const hint    = stage.querySelector<HTMLElement>('.ulm-hint');
+    if (!scroll || !fadeL || !fadeR) return;
+
+    function updateFades() {
+      if (!scroll || !fadeL || !fadeR) return;
+      const scrollLeft = scroll.scrollLeft;
+      const maxScroll  = scroll.scrollWidth - scroll.clientWidth;
+
+      fadeL.style.opacity = scrollLeft > 8 ? '1' : '0';
+      fadeR.style.opacity = (maxScroll - scrollLeft) > 8 ? '1' : '0';
+
+      // Hide hint after user starts scrolling
+      if (hint && scrollLeft > 30) {
+        hint.style.opacity = '0';
+        hint.style.transition = 'opacity 400ms ease';
+      }
+    }
+
+    scroll.addEventListener('scroll', updateFades, { passive: true });
+    updateFades();
+
+    // Mouse drag-to-scroll
+    let isDown = false;
+    let startX = 0;
+    let scrollStart = 0;
+
+    scroll.addEventListener('mousedown', (e) => {
+      isDown = true;
+      startX = e.pageX;
+      scrollStart = scroll.scrollLeft;
+      scroll.style.scrollBehavior = 'auto';
+    });
+    scroll.addEventListener('mouseleave', () => { isDown = false; scroll.style.scrollBehavior = ''; });
+    scroll.addEventListener('mouseup',    () => { isDown = false; scroll.style.scrollBehavior = ''; });
+    scroll.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const dx = (e.pageX - startX) * 1.5;
+      scroll.scrollLeft = scrollStart - dx;
+    });
+
+    // Keyboard scroll (focus the .ulm-scroll, then use arrow keys)
+    scroll.addEventListener('keydown', (e) => {
+      const step = scroll.clientWidth * 0.7;
+      if (e.key === 'ArrowRight') { scroll.scrollLeft += step; e.preventDefault(); }
+      if (e.key === 'ArrowLeft')  { scroll.scrollLeft -= step; e.preventDefault(); }
+    });
+  });
+</script>

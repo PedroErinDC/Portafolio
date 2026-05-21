@@ -5,30 +5,58 @@ import type { Lang } from '../i18n/ui';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useTranslations(lang);
+const isES = lang === 'es';
 ---
 
 <section id="contact" class="section">
   <div class="container-page">
     <p class="section-kicker">{t('contact.kicker')}</p>
     <h2 class="section-title">{t('contact.title')}</h2>
-    <p class="text-[color:var(--color-fg-muted)] max-w-2xl mb-10">{t('contact.body')}</p>
+    <p class="text-[color:var(--color-fg-muted)] max-w-2xl mb-10">
+      {isES
+        ? 'Disponible para colaboraciones, proyectos freelance o posiciones full-time. Contáctame por LinkedIn o revisa mi código en GitHub.'
+        : 'Open to collaborations, freelance projects or full-time positions. Reach out on LinkedIn or check my code on GitHub.'}
+    </p>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <a href="mailto:erindiaz1005@gmail.com" class="card p-5 group">
-        <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-2">// {t('contact.email')}</p>
-        <p class="text-sm font-medium break-all group-hover:text-[color:var(--color-accent)] transition-colors">erindiaz1005@gmail.com</p>
+    <div class="grid md:grid-cols-3 gap-4">
+      <a href="https://www.linkedin.com/in/erin-diaz/" target="_blank" rel="noopener" class="card p-6 group">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-mono text-xs text-[color:var(--color-fg-dim)]">// {t('contact.linkedin')}</p>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[color:var(--color-fg-dim)] group-hover:text-[color:var(--color-accent)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all">
+            <path d="M7 17L17 7M17 7H7M17 7V17"/>
+          </svg>
+        </div>
+        <p class="text-base font-medium mb-1 group-hover:text-[color:var(--color-accent)] transition-colors">linkedin.com/in/erin-diaz</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)]">
+          {isES ? 'Mensaje directo · CV completo · experiencia' : 'Direct message · full CV · experience'}
+        </p>
       </a>
-      <a href="https://github.com/" target="_blank" rel="noopener" class="card p-5 group">
-        <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-2">// {t('contact.github')}</p>
-        <p class="text-sm font-medium group-hover:text-[color:var(--color-accent)] transition-colors">github.com/pendiente</p>
+
+      <a href="https://github.com/PedroErinDC" target="_blank" rel="noopener" class="card p-6 group">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-mono text-xs text-[color:var(--color-fg-dim)]">// {t('contact.github')}</p>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[color:var(--color-fg-dim)] group-hover:text-[color:var(--color-accent)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all">
+            <path d="M7 17L17 7M17 7H7M17 7V17"/>
+          </svg>
+        </div>
+        <p class="text-base font-medium mb-1 group-hover:text-[color:var(--color-accent)] transition-colors">github.com/PedroErinDC</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)]">
+          {isES ? 'Repositorios públicos · código y proyectos' : 'Public repositories · code and projects'}
+        </p>
       </a>
-      <a href="https://linkedin.com/" target="_blank" rel="noopener" class="card p-5 group">
-        <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-2">// {t('contact.linkedin')}</p>
-        <p class="text-sm font-medium group-hover:text-[color:var(--color-accent)] transition-colors">linkedin.com/in/pendiente</p>
-      </a>
-      <div class="card p-5">
-        <p class="font-mono text-xs text-[color:var(--color-fg-dim)] mb-2">// {t('contact.location')}</p>
-        <p class="text-sm font-medium">CDMX, México</p>
+
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-mono text-xs text-[color:var(--color-fg-dim)]">// {t('contact.location')}</p>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[color:var(--color-fg-dim)]">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <p class="text-base font-medium mb-1">CDMX, México</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)]">
+          {isES ? 'Zona horaria CST · presencial / remoto' : 'CST timezone · on-site / remote'}
+        </p>
       </div>
     </div>
   </div>

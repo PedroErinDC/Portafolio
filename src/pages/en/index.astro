@@ -1,18 +1,18 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Hero from '../../components/Hero.astro';
-import AboutSection from '../../components/AboutSection.astro';
+import HomeAboutBrief from '../../components/HomeAboutBrief.astro';
 import SkillsGrid from '../../components/SkillsGrid.astro';
-import ProjectsSection from '../../components/ProjectsSection.astro';
-import ContactSection from '../../components/ContactSection.astro';
+import HomeProjectsMarquee from '../../components/HomeProjectsMarquee.astro';
+import HomeContactCTA from '../../components/HomeContactCTA.astro';
 
 const lang = 'en' as const;
 ---
 
 <Layout title="Pedro Erin Diaz Cumes — Software Engineer" lang={lang}>
   <Hero lang={lang} />
-  <AboutSection lang={lang} />
-  <ProjectsSection lang={lang} />
+  <HomeAboutBrief lang={lang} />
+  <HomeProjectsMarquee lang={lang} />
   <SkillsGrid lang={lang} />
-  <ContactSection lang={lang} />
+  <HomeContactCTA lang={lang} />
 </Layout>

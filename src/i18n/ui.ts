@@ -11,8 +11,9 @@ export const ui = {
   es: {
     'nav.home': 'Inicio',
     'nav.about': 'Sobre mí',
-    'nav.work': 'Trabajo',
-    'nav.school': 'Escuela',
+    'nav.projects': 'Proyectos',
+    'nav.work': 'Proyectos profesionales',
+    'nav.school': 'Proyectos escolares',
     'nav.contact': 'Contacto',
 
     'hero.role': 'Software Engineer',
@@ -49,13 +50,13 @@ export const ui = {
     'project.tags.stack': 'Stack',
     'project.tags.demo': 'Demo',
     'project.demo.note': 'Demo simplificado. No ejecuta los modelos reales por restricciones de hardware. Los datos son ilustrativos.',
-    'project.architecture': 'Arquitectura',
+    'project.architecture': 'Stack tecnológico',
     'project.highlights': 'Aportes principales',
     'project.back': '← Volver',
 
     'contact.kicker': 'Contacto',
     'contact.title': '¿Trabajamos juntos?',
-    'contact.body': 'Disponible para colaboraciones, proyectos freelance o posiciones full-time. Respondo correo en menos de 24 horas.',
+    'contact.body': 'Disponible para colaboraciones y posiciones full-time. Respondo mensajes en menos de 24 horas.',
     'contact.email': 'Correo',
     'contact.github': 'GitHub',
     'contact.linkedin': 'LinkedIn',
@@ -64,8 +65,8 @@ export const ui = {
     'footer.builtWith': 'Construido con Astro + Tailwind.',
     'footer.rights': 'Todos los derechos reservados.',
 
-    'cotton.title': 'Cotton — Monitoreo CCTV Industrial',
-    'cotton.summary': 'Sistema de visión computacional para detección de pallets y conteo de sacos en CEDIS, optimizado para edge computing en Jetson Nano.',
+    'cotton.title': 'CEDIS Vision — Detección de Pallets y Sacos',
+    'cotton.summary': 'Sistema de visión computacional para detección de pallets y conteo de sacos en centros de distribución, optimizado para edge computing en Jetson Nano.',
     'cotton.demoTitle': 'Demo: detección en tiempo simulado',
     'cotton.demoDesc': 'Bounding boxes precomputados sobre clip de cámara industrial. Modelo real: YOLO11-seg + RF-DETR con TensorRT FP16.',
 
@@ -81,8 +82,9 @@ export const ui = {
   en: {
     'nav.home': 'Home',
     'nav.about': 'About',
-    'nav.work': 'Work',
-    'nav.school': 'School',
+    'nav.projects': 'Projects',
+    'nav.work': 'Professional projects',
+    'nav.school': 'School projects',
     'nav.contact': 'Contact',
 
     'hero.role': 'Software Engineer',
@@ -119,13 +121,13 @@ export const ui = {
     'project.tags.stack': 'Stack',
     'project.tags.demo': 'Demo',
     'project.demo.note': 'Simplified demo. Real models are not executed due to hardware constraints. Data shown is illustrative.',
-    'project.architecture': 'Architecture',
+    'project.architecture': 'Tech stack',
     'project.highlights': 'Key contributions',
     'project.back': '← Back',
 
     'contact.kicker': 'Contact',
     'contact.title': 'Let’s work together',
-    'contact.body': 'Open to collaborations, freelance projects or full-time positions. I reply to email within 24 hours.',
+    'contact.body': 'Open to collaborations and full-time positions. I reply to messages within 24 hours.',
     'contact.email': 'Email',
     'contact.github': 'GitHub',
     'contact.linkedin': 'LinkedIn',
@@ -134,7 +136,7 @@ export const ui = {
     'footer.builtWith': 'Built with Astro + Tailwind.',
     'footer.rights': 'All rights reserved.',
 
-    'cotton.title': 'Cotton — Industrial CCTV Monitoring',
+    'cotton.title': 'CEDIS Vision — Pallet and Sack Detection',
     'cotton.summary': 'Computer vision system for pallet detection and sack counting in distribution centers, optimized for Jetson Nano edge computing.',
     'cotton.demoTitle': 'Demo: simulated real-time detection',
     'cotton.demoDesc': 'Pre-computed bounding boxes over an industrial camera clip. Real model: YOLO11-seg + RF-DETR with TensorRT FP16.',

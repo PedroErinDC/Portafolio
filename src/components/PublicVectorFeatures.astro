@@ -1,0 +1,802 @@
+---
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const isES = lang === 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const sources = [
+  {
+    id: 'tv',
+    file: 'noticiero-tv.mp4',
+    medium: 'tv',
+    type: 'TV',
+    channel: isES ? 'Canal 11 · Noticiero estelar' : 'Channel 11 · Evening news',
+    duration: 8.0,
+    transcript: 'El Banco Central anunció esta mañana un ajuste a la tasa de interés. Analistas advierten un posible impacto en el consumo durante el segundo trimestre.',
+    keyword: 'Banco Central',
+    sentiment: 'neutral',
+  },
+  {
+    id: 'radio',
+    file: 'cabina-radio.mp3',
+    medium: 'radio',
+    type: 'Radio',
+    channel: isES ? 'Radio Centro · Mesa económica' : 'Radio Centro · Economic desk',
+    duration: 8.0,
+    transcript: 'Lo que nos dice este movimiento del Banco Central es que viene un trimestre complicado. Los créditos se van a poner caros, eso lo sabemos.',
+    keyword: 'créditos',
+    sentiment: 'negativo',
+  },
+  {
+    id: 'analisis',
+    file: 'mesa-analisis.mp4',
+    medium: 'tv',
+    type: 'TV',
+    channel: isES ? 'TV Azteca · Análisis político' : 'TV Azteca · Political analysis',
+    duration: 8.0,
+    transcript: 'El ajuste era previsible, pero la magnitud sorprendió al mercado. Vamos a ver presión inflacionaria en alimentos y vivienda.',
+    keyword: 'inflacionaria',
+    sentiment: 'negativo',
+  },
+];
+
+const enText = "Mexico's national team secured a stunning three-zero victory over Brazil in last night's group stage match. Forward Hernandez scored twice while striker Martinez sealed the win in the eighty-second minute.";
+const enTranslation = 'La selección mexicana logró una contundente victoria de tres a cero ante Brasil en el partido de fase de grupos. El delantero Hernández marcó dos goles y el atacante Martínez selló la victoria al minuto ochenta y dos.';
+---
+
+<section class="space-y-6">
+
+  <!-- Objetivo + mi aportación -->
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="card p-5">
+      <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-2">// {isES ? 'objetivo' : 'objective'}</p>
+      <h3 class="text-base font-semibold mb-2">{isES ? 'Monitorear TV y radio sin operadores frente a una pantalla' : 'Monitor TV & radio without staff watching screens'}</h3>
+      <p class="text-sm text-[color:var(--color-fg-muted)] leading-relaxed">
+        {isES
+          ? 'Reemplazar la escucha manual de medios con un pipeline que graba IPTV 24/7, transcribe con Whisper y permite buscar menciones por significado (no solo palabras). Todo corre local, sin costo por uso de APIs externas.'
+          : 'Replace manual media monitoring with a pipeline that records IPTV 24/7, transcribes with Whisper, and searches mentions by meaning (not just keywords). All local, no per-call API costs.'}
+      </p>
+    </div>
+
+    <div class="card p-5">
+      <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-2">// {isES ? 'mi aportación principal' : 'my main contribution'}</p>
+      <h3 class="text-base font-semibold mb-2">{isES ? 'Pipeline NLP completo: ingesta → embeddings → contexto' : 'Full NLP pipeline: ingest → embeddings → context'}</h3>
+      <p class="text-sm text-[color:var(--color-fg-muted)] leading-relaxed">
+        {isES
+          ? 'Diseño e integración del flujo Whisper (transcripción) → BGE-M3 (embeddings 1024-d) → Milvus (búsqueda vectorial) → Qwen2.5-14B (contexto y sentimiento). Orquestación con Redis Streams entre microservicios Java y FastAPI.'
+          : 'Design and integration of the Whisper (transcription) → BGE-M3 (1024-d embeddings) → Milvus (vector search) → Qwen2.5-14B (context + sentiment) flow. Redis Streams orchestration between Java and FastAPI microservices.'}
+      </p>
+    </div>
+  </div>
+
+  <header class="flex items-baseline justify-between flex-wrap gap-2 pt-2">
+    <h2 class="text-2xl font-semibold">{isES ? 'Aportaciones al sistema' : 'My contributions to the system'}</h2>
+    <p class="font-mono text-xs text-[color:var(--color-fg-dim)]">{isES ? '// lo que construí' : '// what I built'}</p>
+  </header>
+
+  <!-- BLOCK A: Pipeline en vivo con audio -->
+  <div
+    class="card overflow-hidden"
+    id="pvf-pipeline"
+    data-sources={JSON.stringify(sources)}
+    data-base={`${base}/demos/publicvector/`}
+  >
+    <div class="p-5 md:p-6 border-b border-[color:var(--color-border)]">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-1">// {isES ? 'pipeline con audio real' : 'live pipeline with audio'}</p>
+          <h3 class="text-lg font-semibold">{isES ? 'Mira (y escucha) el pipeline en vivo' : 'Watch (and hear) the live pipeline'}</h3>
+          <p class="text-sm text-[color:var(--color-fg-muted)] mt-1 max-w-2xl">
+            {isES
+              ? 'Tres fuentes reales: noticiero, radio y panel de análisis. Whisper transcribe el audio palabra por palabra, BGE-M3 genera el embedding, Milvus encuentra la mención y Qwen2.5 extrae contexto + sentimiento.'
+              : 'Three real sources: TV news, radio, analysis panel. Whisper transcribes word by word, BGE-M3 generates the embedding, Milvus matches the mention and Qwen2.5 extracts context + sentiment.'}
+          </p>
+        </div>
+        <span class="badge badge-accent" id="pvf-status-badge">
+          <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
+          {isES ? 'LISTO PARA INICIAR' : 'READY TO START'}
+        </span>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1.4fr_1fr] gap-0">
+      <!-- Video stage -->
+      <div class="relative bg-black aspect-video overflow-hidden border-b lg:border-b-0 lg:border-r border-[color:var(--color-border)]" id="pvf-stage" data-medium="tv">
+        <video
+          id="pvf-video"
+          muted
+          playsinline
+          preload="metadata"
+          class="absolute inset-0 w-full h-full object-cover pvf-media pvf-media--video"
+        ></video>
+
+        <audio
+          id="pvf-audio"
+          preload="metadata"
+          class="hidden"
+        ></audio>
+
+        <!-- Radio visualizer (shown when medium=radio) -->
+        <div class="pvf-radio absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#1a0f1f] via-[#16101d] to-[#0b0814] overflow-hidden" id="pvf-radio">
+          <!-- Ambient glow -->
+          <div class="pvf-radio__glow absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"></div>
+
+          <!-- Mic icon -->
+          <div class="relative z-10 mb-3 flex items-center gap-2 px-3 py-1 rounded-full border border-[color:var(--color-violet)]/40 bg-[color:var(--color-violet)]/10">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-rose)] animate-pulse"></span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 1 0 6 0V5a3 3 0 0 0-3-3z"/>
+              <path d="M19 10a7 7 0 0 1-14 0"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+            <span class="font-mono text-[10px] font-bold tracking-widest text-[color:var(--color-violet)]">ON AIR</span>
+          </div>
+
+          <!-- Station info -->
+          <p class="relative z-10 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-fg-dim)] mb-1">{isES ? 'transmisión solo audio' : 'audio-only stream'}</p>
+          <h4 class="relative z-10 text-xl md:text-2xl font-semibold text-[color:var(--color-fg)] mb-1" id="pvf-radio-station">Radio Centro</h4>
+          <p class="relative z-10 font-mono text-xs text-[color:var(--color-fg-muted)] mb-6" id="pvf-radio-show">Mesa económica · 98.5 FM</p>
+
+          <!-- Equalizer bars -->
+          <div class="pvf-eq relative z-10 flex items-end gap-1 h-16 mb-4" id="pvf-eq">
+            {Array.from({ length: 18 }).map((_, i) => (
+              <span class="pvf-eq__bar block w-1.5 rounded-full" style={`--bi: ${i}`}></span>
+            ))}
+          </div>
+
+          <!-- Frequency waveform -->
+          <svg viewBox="0 0 320 30" class="relative z-10 w-[280px] h-7 opacity-70">
+            <path
+              id="pvf-wave"
+              d="M 0 15 Q 10 5 20 15 T 40 15 T 60 15 T 80 15 T 100 15 T 120 15 T 140 15 T 160 15 T 180 15 T 200 15 T 220 15 T 240 15 T 260 15 T 280 15 T 300 15 T 320 15"
+              fill="none"
+              stroke="#a78bfa"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+
+        <!-- Source label overlay -->
+        <div class="absolute top-3 left-3 z-20 px-2 py-1 rounded bg-[color:var(--color-bg)]/70 backdrop-blur-sm flex items-center gap-2">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-rose)] animate-pulse" id="pvf-rec-dot"></span>
+          <span class="font-mono text-[10px] text-[color:var(--color-accent)]" id="pvf-source-type">—</span>
+          <span class="font-mono text-[10px] text-[color:var(--color-fg-muted)]" id="pvf-source-channel">esperando</span>
+        </div>
+
+        <!-- Source progress -->
+        <div class="absolute bottom-3 left-3 right-3 z-20 flex items-center gap-2">
+          {sources.map((_, i) => (
+            <span class="pvf-prog flex-1 h-1 rounded-full bg-white/15 overflow-hidden" data-idx={i}>
+              <span class="pvf-prog__bar block h-full bg-[color:var(--color-accent)]" style="width:0%"></span>
+            </span>
+          ))}
+        </div>
+
+        <!-- Start overlay -->
+        <button
+          type="button"
+          id="pvf-start"
+          class="pvf-start absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-[color:var(--color-bg)]/70 backdrop-blur-sm text-[color:var(--color-fg)] hover:bg-[color:var(--color-bg)]/85 transition-colors"
+        >
+          <span class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[color:var(--color-accent)] text-[color:var(--color-bg)] shadow-lg shadow-[color:var(--color-accent-glow)] group-hover:scale-105 transition-transform">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="font-semibold text-base">{isES ? 'Iniciar pipeline con audio' : 'Start pipeline with audio'}</span>
+          <span class="font-mono text-[10px] text-[color:var(--color-fg-muted)] uppercase tracking-widest">{isES ? '3 fuentes · ~24s · audio en vivo' : '3 sources · ~24s · live audio'}</span>
+        </button>
+
+        <!-- Audio toggle (visible during playback) -->
+        <button
+          type="button"
+          id="pvf-mute"
+          class="pvf-mute absolute top-3 right-3 z-20 hidden items-center gap-1.5 px-2 py-1 rounded bg-[color:var(--color-bg)]/70 backdrop-blur-sm font-mono text-[10px] text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)] transition-colors"
+          aria-label="Toggle audio"
+        >
+          <svg id="pvf-mute-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <span id="pvf-mute-label">audio</span>
+        </button>
+      </div>
+
+      <!-- Pipeline side panel -->
+      <div class="p-5 md:p-6 flex flex-col">
+        <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-3">// {isES ? 'pipeline NLP' : 'NLP pipeline'}</p>
+
+        <!-- Pipeline steps -->
+        <div class="space-y-2 mb-4">
+          <div class="pvf-step flex items-center gap-3 p-2.5 rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]" data-step="whisper">
+            <span class="pvf-step__icon w-7 h-7 rounded-md flex items-center justify-center bg-[color:var(--color-border)] text-[color:var(--color-fg-dim)] font-mono text-[10px] shrink-0">1</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-mono text-xs text-[color:var(--color-fg)]">Faster-Whisper <span class="text-[color:var(--color-fg-dim)]">large-v3</span></p>
+              <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)] pvf-step__detail">{isES ? 'audio → texto' : 'audio → text'}</p>
+            </div>
+          </div>
+          <div class="pvf-step flex items-center gap-3 p-2.5 rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]" data-step="bge">
+            <span class="pvf-step__icon w-7 h-7 rounded-md flex items-center justify-center bg-[color:var(--color-border)] text-[color:var(--color-fg-dim)] font-mono text-[10px] shrink-0">2</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-mono text-xs text-[color:var(--color-fg)]">BGE-M3 <span class="text-[color:var(--color-fg-dim)]">1024-d</span></p>
+              <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)] pvf-step__detail">embedding</p>
+            </div>
+          </div>
+          <div class="pvf-step flex items-center gap-3 p-2.5 rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]" data-step="milvus">
+            <span class="pvf-step__icon w-7 h-7 rounded-md flex items-center justify-center bg-[color:var(--color-border)] text-[color:var(--color-fg-dim)] font-mono text-[10px] shrink-0">3</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-mono text-xs text-[color:var(--color-fg)]">Milvus <span class="text-[color:var(--color-fg-dim)]">cosine</span></p>
+              <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)] pvf-step__detail">{isES ? 'vector search' : 'vector search'}</p>
+            </div>
+          </div>
+          <div class="pvf-step flex items-center gap-3 p-2.5 rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]" data-step="qwen">
+            <span class="pvf-step__icon w-7 h-7 rounded-md flex items-center justify-center bg-[color:var(--color-border)] text-[color:var(--color-fg-dim)] font-mono text-[10px] shrink-0">4</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-mono text-xs text-[color:var(--color-fg)]">Qwen2.5 <span class="text-[color:var(--color-fg-dim)]">14B</span></p>
+              <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)] pvf-step__detail">{isES ? 'contexto + sentimiento' : 'context + sentiment'}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live transcript -->
+        <div class="rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)] p-3 flex-1 flex flex-col min-h-[140px]">
+          <div class="flex items-center justify-between mb-2 shrink-0">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-fg-dim)]">{isES ? 'transcripción en vivo' : 'live transcript'}</span>
+            <span class="font-mono text-[10px] text-[color:var(--color-fg-dim)]" id="pvf-trans-meta">—</span>
+          </div>
+          <p id="pvf-transcript" class="text-sm leading-relaxed text-[color:var(--color-fg)] font-mono flex-1"></p>
+        </div>
+
+        <!-- Result card -->
+        <div id="pvf-result" class="mt-3 pvf-result rounded-lg border border-[color:var(--color-border)] p-3 bg-[color:var(--color-bg-elev)]" hidden>
+          <div class="flex items-center justify-between mb-1.5 gap-2">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)]">{isES ? 'mención registrada' : 'mention logged'}</span>
+            <span class="font-mono text-[10px]" id="pvf-result-sent">—</span>
+          </div>
+          <p class="text-xs text-[color:var(--color-fg-muted)]" id="pvf-result-context">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOCK B: Whisper multilenguaje (EN sin audio) -->
+  <div class="card overflow-hidden">
+    <div class="p-5 md:p-6 border-b border-[color:var(--color-border)]">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-1">// whisper multilingual</p>
+          <h3 class="text-lg font-semibold">{isES ? 'Transcripción multilenguaje + traducción' : 'Multilingual transcription + translation'}</h3>
+          <p class="text-sm text-[color:var(--color-fg-muted)] mt-1 max-w-2xl">
+            {isES
+              ? 'Faster-Whisper detecta automáticamente el idioma del segmento. Transcribe en el idioma original y Qwen2.5 traduce + analiza sentimiento para el dashboard en español.'
+              : 'Faster-Whisper auto-detects the segment language. It transcribes in the original language while Qwen2.5 translates and analyzes sentiment for the Spanish dashboard.'}
+          </p>
+        </div>
+        <span class="badge badge-accent">
+          <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
+          {isES ? 'EN VIVO (simulado)' : 'LIVE (simulated)'}
+        </span>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1.2fr_1fr] gap-0">
+      <div class="relative bg-black aspect-video overflow-hidden border-b lg:border-b-0 lg:border-r border-[color:var(--color-border)]">
+        <video
+          id="pvf-en-video"
+          src={`${base}/demos/publicvector/noticiero-en.mp4`}
+          muted
+          autoplay
+          loop
+          playsinline
+          preload="metadata"
+          class="absolute inset-0 w-full h-full object-cover"
+        ></video>
+        <div class="absolute top-3 left-3 z-20 px-2 py-1 rounded bg-[color:var(--color-bg)]/70 backdrop-blur-sm flex items-center gap-2">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-rose)] animate-pulse"></span>
+          <span class="font-mono text-[10px] text-[color:var(--color-accent)]">TV · INTL</span>
+          <span class="font-mono text-[10px] text-[color:var(--color-fg-muted)]">{isES ? 'Sports International' : 'Sports International'}</span>
+        </div>
+        <div class="absolute bottom-3 left-3 z-20 px-2 py-1 rounded bg-[color:var(--color-bg)]/70 backdrop-blur-sm">
+          <span class="font-mono text-[10px] text-[color:var(--color-fg-muted)]">{isES ? 'sin audio · solo demostración visual' : 'no audio · visual demo only'}</span>
+        </div>
+      </div>
+
+      <div class="p-5 md:p-6 flex flex-col">
+        <!-- Lang detect -->
+        <div class="flex items-center gap-3 mb-4">
+          <span class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-fg-dim)]">{isES ? 'idioma detectado' : 'detected lang'}</span>
+          <span class="pvf-lang-pill inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[color:var(--color-violet-glow)] border border-[color:var(--color-violet)]">
+            <span class="font-mono text-[10px] font-bold text-[color:var(--color-violet)]">EN</span>
+            <span class="font-mono text-[10px] text-[color:var(--color-fg-muted)]" id="pvf-en-conf">conf 0.98</span>
+          </span>
+        </div>
+
+        <!-- EN transcript -->
+        <div class="rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)] p-3 mb-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-fg-dim)]">{isES ? 'transcripción original (EN)' : 'original transcript (EN)'}</span>
+            <span class="font-mono text-[10px] text-[color:var(--color-fg-dim)]">whisper</span>
+          </div>
+          <p id="pvf-en-text" class="text-sm leading-relaxed text-[color:var(--color-fg)] font-mono min-h-[60px]"></p>
+        </div>
+
+        <!-- Translation arrow -->
+        <div class="flex items-center justify-center gap-2 my-1 text-[color:var(--color-fg-dim)]">
+          <span class="font-mono text-[10px]">Qwen2.5</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          <span class="font-mono text-[10px]">{isES ? 'traduce' : 'translates'}</span>
+        </div>
+
+        <!-- ES translation -->
+        <div class="rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-accent)] p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)]">{isES ? 'traducción (ES)' : 'translation (ES)'}</span>
+            <span class="font-mono text-[10px] text-[color:var(--color-fg-dim)]" id="pvf-en-sent">—</span>
+          </div>
+          <p id="pvf-es-text" class="text-sm leading-relaxed text-[color:var(--color-fg)] font-mono min-h-[60px]"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other contributions list -->
+  <div class="card p-5 md:p-6">
+    <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-2">// {isES ? 'otras aportaciones' : 'other contributions'}</p>
+    <h3 class="text-base font-semibold mb-4">{isES ? 'Lo demás que construí en este proyecto' : 'Everything else I built on this project'}</h3>
+
+    <ul class="grid sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm text-[color:var(--color-fg-muted)]">
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Grabación IPTV 24/7 con FFmpeg y segmentación automática en bloques de 30 minutos.' : '24/7 IPTV recording with FFmpeg and automatic 30-min segmentation.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Microservicios Java 17 + Spring Boot 3 para gestión de canales, segmentos y reportes.' : 'Java 17 + Spring Boot 3 microservices for channels, segments and reports.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'API FastAPI que sirve modelos Whisper y BGE-M3 con pooling de GPU.' : 'FastAPI service serving Whisper and BGE-M3 models with GPU pooling.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Orquestación con Redis Streams entre captura, transcripción y embeddings.' : 'Redis Streams orchestration between capture, transcription and embeddings.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Esquema Milvus con índice HNSW y filtros por canal/fecha/idioma.' : 'Milvus schema with HNSW index and per-channel/date/lang filters.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Prompt engineering para Qwen2.5 (extracción de contexto + sentimiento estructurado).' : 'Prompt engineering for Qwen2.5 (context extraction + structured sentiment).'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Dashboard Next.js con filtros, búsqueda híbrida y reproducción del audio fuente.' : 'Next.js dashboard with filters, hybrid search and source-audio playback.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Esquema PostgreSQL para metadatos de canales, segmentos y menciones.' : 'PostgreSQL schema for channel, segment and mention metadata.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Despliegue local sin dependencias de cloud — todo el cómputo en GPU on-prem.' : 'Fully local deployment, no cloud dependencies — all compute on-prem GPU.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Documentación técnica del pipeline, prompts y operación.' : 'Technical docs for pipeline, prompts and operations.'}</span>
+      </li>
+    </ul>
+  </div>
+
+</section>
+
+<style>
+  /* Start overlay group hover */
+  .pvf-start { cursor: pointer; }
+  .pvf-start:hover svg { transform: scale(1.05); }
+  .pvf-start svg { transition: transform 200ms ease; }
+  .pvf-start--hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 400ms ease;
+  }
+
+  /* Mute toggle visible when active */
+  .pvf-mute--visible {
+    display: inline-flex !important;
+  }
+
+  /* Media swap: show video for tv, radio visualizer for radio */
+  #pvf-stage[data-medium="tv"]    .pvf-media--video { display: block; }
+  #pvf-stage[data-medium="tv"]    .pvf-radio        { display: none;  }
+  #pvf-stage[data-medium="radio"] .pvf-media--video { display: none;  }
+  #pvf-stage[data-medium="radio"] .pvf-radio        { display: flex;  }
+
+  /* Radio visualizer ambient glow */
+  .pvf-radio__glow {
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-violet) 28%, transparent) 0%, transparent 60%);
+    filter: blur(40px);
+    animation: pvf-radio-glow 4s ease-in-out infinite;
+  }
+  @keyframes pvf-radio-glow {
+    0%, 100% { opacity: 0.55; transform: translate(-50%, 0) scale(1); }
+    50%      { opacity: 0.85; transform: translate(-50%, 0) scale(1.08); }
+  }
+
+  /* Equalizer bars — only animate when active */
+  .pvf-eq__bar {
+    background: linear-gradient(to top, color-mix(in srgb, var(--color-violet) 80%, transparent), var(--color-violet));
+    height: 8%;
+    transform-origin: bottom center;
+    box-shadow: 0 0 6px color-mix(in srgb, var(--color-violet) 50%, transparent);
+  }
+  #pvf-stage[data-medium="radio"][data-state="playing"] .pvf-eq__bar {
+    animation: pvf-eq 0.9s ease-in-out infinite;
+    animation-delay: calc(var(--bi, 0) * 70ms);
+  }
+  @keyframes pvf-eq {
+    0%, 100% { height: 12%; }
+    20%      { height: 88%; }
+    50%      { height: 32%; }
+    75%      { height: 70%; }
+  }
+
+  /* Waveform pulse */
+  #pvf-stage[data-medium="radio"][data-state="playing"] #pvf-wave {
+    animation: pvf-wave-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pvf-wave-pulse {
+    0%, 100% { opacity: 0.5; stroke-width: 1; }
+    50%      { opacity: 1;   stroke-width: 1.8; }
+  }
+
+  /* Pipeline steps states */
+  .pvf-step {
+    transition: border-color 250ms ease, background 250ms ease, transform 200ms ease;
+  }
+  .pvf-step[data-state="active"] {
+    border-color: #fbbf24;
+    background: color-mix(in srgb, #fbbf24 8%, var(--color-bg-elev));
+  }
+  .pvf-step[data-state="active"] .pvf-step__icon {
+    background: #fbbf24;
+    color: #0a0e14;
+    box-shadow: 0 0 10px #fbbf24;
+    animation: pvf-step-pulse 1s ease-in-out infinite;
+  }
+  .pvf-step[data-state="done"] {
+    border-color: var(--color-accent);
+  }
+  .pvf-step[data-state="done"] .pvf-step__icon {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  @keyframes pvf-step-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.12); }
+  }
+
+  /* Source progress bars */
+  .pvf-prog {
+    transition: opacity 200ms ease;
+  }
+  .pvf-prog[data-state="pending"] { opacity: 0.35; }
+  .pvf-prog[data-state="active"]  { opacity: 1; }
+  .pvf-prog[data-state="done"]    { opacity: 0.8; }
+
+  .pvf-prog[data-state="done"] .pvf-prog__bar { width: 100% !important; }
+
+  .pvf-prog__bar {
+    transition: width 180ms linear;
+  }
+
+  /* Result card pop-in */
+  .pvf-result[hidden] { display: none !important; }
+  .pvf-result {
+    animation: pvf-result-pop 380ms ease-out;
+  }
+  @keyframes pvf-result-pop {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+
+  /* Transcript word fade-in */
+  .pvf-word {
+    opacity: 0;
+    animation: pvf-word-in 220ms ease-out forwards;
+  }
+  .pvf-word--key {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  @keyframes pvf-word-in {
+    to { opacity: 1; }
+  }
+
+  /* EN text typing cursor */
+  .pvf-en-cursor::after {
+    content: '▎';
+    color: var(--color-accent);
+    margin-left: 1px;
+    animation: pvf-blink 1s steps(2) infinite;
+  }
+  @keyframes pvf-blink {
+    50% { opacity: 0; }
+  }
+
+  /* Lang pill subtle pulse */
+  .pvf-lang-pill {
+    animation: pvf-lang-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pvf-lang-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50%      { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-violet) 18%, transparent); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pvf-step__icon,
+    .pvf-lang-pill,
+    .pvf-en-cursor::after,
+    .pvf-word {
+      animation: none;
+    }
+    .pvf-word { opacity: 1; }
+  }
+</style>
+
+<script>
+  type Source = {
+    id: string;
+    file: string;
+    medium: 'tv' | 'radio';
+    type: string;
+    channel: string;
+    duration: number;
+    transcript: string;
+    keyword: string;
+    sentiment: 'positivo' | 'negativo' | 'neutral';
+  };
+
+  const pipelineRoot = document.getElementById('pvf-pipeline');
+  const SOURCES: Source[] = JSON.parse(pipelineRoot?.dataset.sources ?? '[]');
+  const BASE_URL: string  = pipelineRoot?.dataset.base ?? '/demos/publicvector/';
+
+  // ===== Block A: pipeline with audio =====
+  const stage         = document.getElementById('pvf-stage') as HTMLElement | null;
+  const video         = document.getElementById('pvf-video') as HTMLVideoElement | null;
+  const audio         = document.getElementById('pvf-audio') as HTMLAudioElement | null;
+  const radioStation  = document.getElementById('pvf-radio-station');
+  const radioShow     = document.getElementById('pvf-radio-show');
+  const startBtn      = document.getElementById('pvf-start');
+  const muteBtn       = document.getElementById('pvf-mute');
+  const muteLabel     = document.getElementById('pvf-mute-label');
+  const statusBadge   = document.getElementById('pvf-status-badge');
+  const srcTypeEl     = document.getElementById('pvf-source-type');
+  const srcChEl       = document.getElementById('pvf-source-channel');
+  const transcriptEl  = document.getElementById('pvf-transcript');
+  const transMetaEl   = document.getElementById('pvf-trans-meta');
+  const resultEl      = document.getElementById('pvf-result');
+  const resultSentEl  = document.getElementById('pvf-result-sent');
+  const resultCtxEl   = document.getElementById('pvf-result-context');
+  const progEls       = Array.from(document.querySelectorAll<HTMLElement>('.pvf-prog'));
+  const stepEls       = Array.from(document.querySelectorAll<HTMLElement>('.pvf-step'));
+
+  function getActiveMedia(): HTMLMediaElement | null {
+    const m = stage?.dataset.medium;
+    return m === 'radio' ? audio : video;
+  }
+
+  type StepId = 'whisper' | 'bge' | 'milvus' | 'qwen';
+  function setStep(id: StepId, state: 'idle' | 'active' | 'done') {
+    const el = stepEls.find((e) => e.dataset.step === id);
+    if (!el) return;
+    if (state === 'idle') delete el.dataset.state;
+    else el.dataset.state = state;
+  }
+  function resetSteps() {
+    (['whisper', 'bge', 'milvus', 'qwen'] as StepId[]).forEach((s) => setStep(s, 'idle'));
+  }
+
+  function sentimentColor(s: Source['sentiment']) {
+    if (s === 'positivo') return '#34d399';
+    if (s === 'negativo') return '#fb7185';
+    return '#97a3b6';
+  }
+
+  function sleep(ms: number) {
+    return new Promise<void>((res) => setTimeout(res, ms));
+  }
+
+  function setProg(idx: number, state: 'pending' | 'active' | 'done', pct?: number) {
+    const el = progEls[idx];
+    if (!el) return;
+    el.dataset.state = state;
+    if (pct !== undefined) {
+      const bar = el.querySelector<HTMLElement>('.pvf-prog__bar');
+      if (bar) bar.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+    }
+  }
+
+  function renderTranscript(words: string[], keyword: string) {
+    if (!transcriptEl) return;
+    const kw = keyword.toLowerCase();
+    transcriptEl.innerHTML = words.map((w, i) => {
+      const clean = w.replace(/[.,;:!?]/g, '').toLowerCase();
+      const isKey = kw.split(' ').some((k) => clean === k);
+      return `<span class="pvf-word ${isKey ? 'pvf-word--key' : ''}" style="animation-delay:${i * 30}ms">${w}</span>`;
+    }).join(' ');
+  }
+
+  let running = false;
+  async function playSource(src: Source, idx: number) {
+    if (!stage || !video || !audio) return;
+
+    // UI
+    if (srcTypeEl) srcTypeEl.textContent = src.type;
+    if (srcChEl)   srcChEl.textContent   = src.channel;
+    if (transMetaEl) transMetaEl.textContent = `${src.type} · ${src.channel.split('·')[0].trim()}`;
+    if (resultEl) resultEl.hidden = true;
+    resetSteps();
+
+    progEls.forEach((_, i) => {
+      if (i < idx) setProg(i, 'done', 100);
+      else if (i === idx) setProg(i, 'active', 0);
+      else setProg(i, 'pending', 0);
+    });
+
+    // Switch medium
+    stage.dataset.medium = src.medium;
+    stage.dataset.state  = 'loading';
+
+    // Update radio labels if needed
+    if (src.medium === 'radio') {
+      const parts = src.channel.split('·').map((s) => s.trim());
+      if (radioStation) radioStation.textContent = parts[0] ?? src.channel;
+      if (radioShow)    radioShow.textContent    = `${parts[1] ?? ''}${parts[1] ? ' · ' : ''}98.5 FM`;
+    }
+
+    // Pick active media element
+    const media: HTMLMediaElement = src.medium === 'radio' ? audio : video;
+    const other: HTMLMediaElement = src.medium === 'radio' ? video : audio;
+
+    // Pause the other one to avoid stale playback
+    try { other.pause(); other.currentTime = 0; } catch {}
+
+    media.src = `${BASE_URL}${src.file}`;
+    media.muted = false;
+    media.currentTime = 0;
+    setStep('whisper', 'active');
+
+    try {
+      await media.play();
+    } catch (err) {
+      media.muted = true;
+      await media.play();
+    }
+    stage.dataset.state = 'playing';
+
+    // Words appear progressively
+    const words = src.transcript.split(' ');
+    renderTranscript(words, src.keyword);
+
+    // Mid-stream: BGE + Milvus + Qwen
+    const t1 = setTimeout(() => setStep('whisper', 'done'), src.duration * 1000 * 0.45);
+    const t2 = setTimeout(() => setStep('bge', 'active'),    src.duration * 1000 * 0.50);
+    const t3 = setTimeout(() => setStep('bge', 'done'),      src.duration * 1000 * 0.65);
+    const t4 = setTimeout(() => setStep('milvus', 'active'), src.duration * 1000 * 0.68);
+    const t5 = setTimeout(() => setStep('milvus', 'done'),   src.duration * 1000 * 0.82);
+    const t6 = setTimeout(() => setStep('qwen', 'active'),   src.duration * 1000 * 0.85);
+
+    function onTime() {
+      const pct = (media.currentTime / src.duration) * 100;
+      setProg(idx, 'active', pct);
+    }
+    media.addEventListener('timeupdate', onTime);
+
+    await new Promise<void>((res) => {
+      const onEnd = () => {
+        media.removeEventListener('ended', onEnd);
+        res();
+      };
+      media.addEventListener('ended', onEnd);
+    });
+
+    media.removeEventListener('timeupdate', onTime);
+    [t1, t2, t3, t4, t5, t6].forEach(clearTimeout);
+    stage.dataset.state = 'idle';
+
+    setStep('qwen', 'done');
+    setProg(idx, 'done', 100);
+
+    if (resultEl && resultSentEl && resultCtxEl) {
+      resultEl.hidden = false;
+      const color = sentimentColor(src.sentiment);
+      resultSentEl.style.color = color;
+      resultSentEl.textContent = `● ${src.sentiment}`;
+      resultCtxEl.textContent = src.transcript;
+    }
+
+    await sleep(3500);
+  }
+
+  async function runAll() {
+    if (!video || running) return;
+    running = true;
+    if (statusBadge) statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span> PROCESANDO';
+    startBtn?.classList.add('pvf-start--hidden');
+    muteBtn?.classList.add('pvf-mute--visible');
+
+    for (let i = 0; i < SOURCES.length; i++) {
+      await playSource(SOURCES[i], i);
+    }
+
+    running = false;
+    if (statusBadge) statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span> CICLO COMPLETO ✓';
+
+    // Restart loop after pause
+    await sleep(2500);
+    startBtn?.classList.remove('pvf-start--hidden');
+    muteBtn?.classList.remove('pvf-mute--visible');
+    if (statusBadge) statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span> LISTO PARA INICIAR';
+    progEls.forEach((_, i) => setProg(i, 'pending', 0));
+    resetSteps();
+    if (transcriptEl) transcriptEl.innerHTML = '';
+    if (resultEl) resultEl.hidden = true;
+  }
+
+  startBtn?.addEventListener('click', runAll);
+
+  muteBtn?.addEventListener('click', () => {
+    const m = getActiveMedia();
+    if (!m) return;
+    m.muted = !m.muted;
+    if (muteLabel) muteLabel.textContent = m.muted ? 'muted' : 'audio';
+  });
+
+  // ===== Block B: EN multilingual demo =====
+  const enText = "Mexico's national team secured a stunning three-zero victory over Brazil in last night's group stage match. Forward Hernandez scored twice while striker Martinez sealed the win in the eighty-second minute.";
+  const esText = 'La selección mexicana logró una contundente victoria de tres a cero ante Brasil en el partido de fase de grupos. El delantero Hernández marcó dos goles y el atacante Martínez selló la victoria al minuto ochenta y dos.';
+
+  const enTextEl = document.getElementById('pvf-en-text');
+  const esTextEl = document.getElementById('pvf-es-text');
+  const enConfEl = document.getElementById('pvf-en-conf');
+  const enSentEl = document.getElementById('pvf-en-sent');
+
+  async function typeText(el: HTMLElement | null, text: string, speed = 28) {
+    if (!el) return;
+    el.textContent = '';
+    el.classList.add('pvf-en-cursor');
+    for (const ch of text) {
+      el.textContent += ch;
+      await sleep(speed);
+    }
+    el.classList.remove('pvf-en-cursor');
+  }
+
+  async function enLoop() {
+    while (true) {
+      // Reset
+      if (enTextEl) { enTextEl.textContent = ''; enTextEl.classList.remove('pvf-en-cursor'); }
+      if (esTextEl) { esTextEl.textContent = ''; esTextEl.classList.remove('pvf-en-cursor'); }
+      if (enSentEl) { enSentEl.textContent = '—'; enSentEl.style.color = 'var(--color-fg-dim)'; }
+      if (enConfEl) enConfEl.textContent = 'detectando…';
+      await sleep(1000);
+
+      if (enConfEl) enConfEl.textContent = 'conf 0.98';
+      await sleep(400);
+
+      await typeText(enTextEl, enText, 22);
+      await sleep(700);
+      await typeText(esTextEl, esText, 24);
+      await sleep(500);
+
+      if (enSentEl) {
+        enSentEl.textContent = '● positivo';
+        enSentEl.style.color = '#34d399';
+      }
+      await sleep(5500);
+    }
+  }
+
+  enLoop();
+</script>

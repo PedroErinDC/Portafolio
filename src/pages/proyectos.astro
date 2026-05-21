@@ -1,0 +1,92 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CompanyCard from '../components/CompanyCard.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+
+const lang = 'es' as const;
+
+const celestialProjects = [
+  {
+    title: 'CEDIS Vision — Detección de Pallets y Sacos',
+    summary: 'CCTV industrial con detección de pallets y conteo de sacos sobre Jetson Nano. YOLO11-seg + RF-DETR + TensorRT.',
+    href: '/trabajo/cedis-vision',
+    tags: ['yolo', 'tensorrt', 'jetson', 'react'],
+    video: '/demos/cedis-thumb.mp4',
+    videoPoster: '/demos/cedis-thumb-poster.jpg',
+  },
+  {
+    title: 'PublicVector — Media Monitoring',
+    summary: 'Monitoreo TV/Radio 24/7 con Whisper, búsqueda semántica Milvus y análisis Qwen2.5.',
+    href: '/trabajo/publicvector',
+    tags: ['whisper', 'milvus', 'qwen', 'springboot'],
+    video: '/demos/publicvector-thumb.mp4',
+    videoPoster: '/demos/publicvector-thumb-poster.jpg',
+  },
+];
+
+const unamProjects = [
+  {
+    title: 'Juego Educativo — Unity',
+    summary: 'Plataformero 2D pixel art con checkpoints, power-ups permanentes, trampas autónomas y cinemáticas. Hecho en Unity con C# como proyecto académico en la UNAM.',
+    href: '/escuela/juego-unity',
+    tags: ['unity', 'csharp', 'tilemap', 'gamedesign'],
+    video: '/demos/unity/mec-checkpoints.mp4',
+    videoPoster: '/demos/unity/mec-checkpoints-poster.jpg',
+  },
+];
+---
+
+<Layout title="Proyectos — Pedro Erin Diaz Cumes" lang={lang}>
+  <div class="container-page pt-14 md:pt-20 pb-6">
+    <p class="section-kicker">Portafolio</p>
+    <h1 class="text-3xl md:text-5xl font-semibold mb-4 text-balance">Proyectos</h1>
+    <p class="text-base md:text-lg text-[color:var(--color-fg-muted)] max-w-2xl text-balance">
+      Sistemas en producción y trabajos académicos. Cada empresa o institución agrupa los proyectos que construí en ella.
+    </p>
+  </div>
+
+  <section class="container-page pb-6 pt-6">
+    <SectionHeader
+      number="01"
+      title="Proyectos profesionales"
+      subtitle="Sistemas en producción construidos en empresa."
+      icon="briefcase"
+    />
+    <CompanyCard
+      logo="/companies/celestial.png"
+      logoAlt="Celestial Dynamics"
+      company="Celestial Dynamics"
+      role="Software Engineer · AI & Full-Stack"
+      period="Abril 2025 — Actualidad"
+      location="Presencial · CDMX"
+      projects={celestialProjects}
+      ctaLabel="Ver detalles"
+      projectsLabel="Proyectos"
+    />
+  </section>
+
+  <section class="container-page pb-16 pt-10">
+    <SectionHeader
+      number="02"
+      title="Proyectos escolares"
+      subtitle="Trabajos académicos durante la licenciatura."
+      icon="graduation"
+      accentColor="#C8A961"
+    />
+    <CompanyCard
+      logo="/companies/unam.png"
+      logoAlt="Universidad Nacional Autónoma de México"
+      company="UNAM"
+      role="Licenciatura en Informática"
+      affiliation="Facultad de Contaduría y Administración"
+      period="2020 — 2024"
+      location="Ciudad Universitaria · CDMX"
+      url="https://www.fca.unam.mx/"
+      projects={unamProjects}
+      ctaLabel="Ver detalles"
+      projectsLabel="Proyectos"
+      logoBg="radial-gradient(120% 100% at 0% 0%, #2B5BA8 0%, #1F3F73 55%, #14284D 100%)"
+      logoAccent={[ 'rgba(200, 169, 97, 0.55)', 'rgba(43, 91, 168, 0.45)' ]}
+    />
+  </section>
+</Layout>

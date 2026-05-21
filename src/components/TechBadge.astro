@@ -1,0 +1,78 @@
+---
+import { tech } from '../data/tech';
+
+interface Props {
+  id: keyof typeof tech;
+  size?: 'sm' | 'md' | 'lg';
+  variant?: 'minimal' | 'colored';
+}
+
+const { id, size = 'md', variant = 'minimal' } = Astro.props;
+const t = tech[id];
+
+if (!t) {
+  throw new Error(`Tech badge "${id}" not found in registry`);
+}
+
+const sizes = {
+  sm: { px: 'px-2.5', py: 'py-1', text: 'text-xs', icon: 12, gap: 'gap-1.5' },
+  md: { px: 'px-3', py: 'py-1.5', text: 'text-sm', icon: 16, gap: 'gap-2' },
+  lg: { px: 'px-4', py: 'py-2', text: 'text-base', icon: 20, gap: 'gap-2.5' },
+};
+const s = sizes[size];
+
+const isMinimal = variant === 'minimal';
+---
+
+{isMinimal ? (
+  <span
+    class={`inline-flex items-center ${s.gap} ${s.px} ${s.py} rounded-md font-medium ${s.text} bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)] text-[color:var(--color-fg)] hover:border-[color:var(--color-border-strong)] transition-colors`}
+  >
+    {t.slug ? (
+      <img
+        src={`https://cdn.simpleicons.org/${t.slug}`}
+        alt=""
+        width={s.icon}
+        height={s.icon}
+        loading="lazy"
+        decoding="async"
+        class="flex-shrink-0 opacity-90"
+        style={t.invertOnDark ? 'filter: brightness(0) invert(1)' : ''}
+      />
+    ) : (
+      <span
+        class="inline-flex items-center justify-center font-mono font-bold flex-shrink-0"
+        style={`width: ${s.icon}px; height: ${s.icon}px; font-size: ${s.icon * 0.7}px; color: ${t.color}`}
+      >
+        {t.initial}
+      </span>
+    )}
+    <span class="whitespace-nowrap">{t.name}</span>
+  </span>
+) : (
+  <span
+    class={`inline-flex items-center ${s.gap} ${s.px} ${s.py} rounded-md font-medium ${s.text} text-white shadow-sm`}
+    style={`background-color: ${t.color}`}
+  >
+    {t.slug ? (
+      <img
+        src={`https://cdn.simpleicons.org/${t.slug}`}
+        alt=""
+        width={s.icon}
+        height={s.icon}
+        loading="lazy"
+        decoding="async"
+        class="flex-shrink-0"
+        style="filter: brightness(0) invert(1)"
+      />
+    ) : (
+      <span
+        class="inline-flex items-center justify-center font-mono font-bold flex-shrink-0"
+        style={`width: ${s.icon}px; height: ${s.icon}px; font-size: ${s.icon * 0.7}px`}
+      >
+        {t.initial}
+      </span>
+    )}
+    <span class="whitespace-nowrap">{t.name}</span>
+  </span>
+)}

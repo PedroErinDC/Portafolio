@@ -1,0 +1,52 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import ProjectShell from '../../../components/ProjectShell.astro';
+import CedisVisionDemo from '../../../components/CedisVisionDemo.astro';
+import CedisFeatures from '../../../components/CedisFeatures.astro';
+import TechCard from '../../../components/TechCard.astro';
+
+const lang = 'en' as const;
+const highlights = [
+  'Pallet detection and automated sack counting with YOLO11-seg + RF-DETR over ROI segmentation.',
+  'Inference pipeline optimized with NVIDIA TensorRT (FP16) on Jetson Nano, latency under 50ms per frame.',
+  'Operational dashboard in React 19 + TypeScript with low-latency HLS streaming for real-time visualization.',
+  'Backend with Node.js 22 + tRPC + Drizzle ORM over MySQL for industrial inventory management.',
+  'Automatic alert system and QR code generation for completed pallets.',
+  'Simultaneous support for 4 IP cameras (RTSP) with HLS conversion, expandable.',
+];
+
+const stackGroups = [
+  { label: 'Vision & models', items: [{ id: 'yolo', caption: 'detection' }, { id: 'rfdetr', caption: 'counting' }, { id: 'tensorrt', caption: 'FP16' }, { id: 'cuda', caption: 'acceleration' }, { id: 'jetson', caption: 'edge' }] },
+  { label: 'Backend & data', items: [{ id: 'nodejs', caption: 'runtime' }, { id: 'trpc', caption: 'API' }, { id: 'drizzle', caption: 'ORM' }, { id: 'mysql', caption: 'DB' }, { id: 'docker', caption: 'containers' }, { id: 'ffmpeg', caption: 'streaming' }] },
+  { label: 'Frontend', items: [{ id: 'react', caption: 'UI' }, { id: 'typescript', caption: 'language' }, { id: 'hls', caption: 'video' }] },
+] as const;
+---
+
+<Layout title="CEDIS Vision — Pedro Erin Diaz Cumes" lang={lang}>
+  <ProjectShell
+    lang={lang}
+    title="CEDIS Vision — Pallet and Sack Detection"
+    summary="End-to-end computer vision system for distribution centers. Detects pallets and counts sacks in real time on edge hardware (Jetson Nano), cutting operational cost of manual monitoring."
+    tags={['YOLO11-seg', 'RF-DETR', 'TensorRT FP16', 'CUDA', 'Jetson Nano', 'React 19', 'TypeScript', 'tRPC', 'Drizzle ORM', 'MySQL', 'Docker', 'HLS']}
+    year="2025"
+    role="Software Engineer · AI & Full-Stack"
+    backHref="/en/projects"
+    category="work"
+    hideHighlightsTitle={true}
+  >
+    <CedisVisionDemo slot="demo" lang={lang} />
+
+    <CedisFeatures slot="highlights" lang={lang} />
+
+    <div slot="architecture" class="space-y-8">
+      {stackGroups.map((g) => (
+        <div>
+          <h3 class="font-mono text-xs uppercase tracking-widest text-[color:var(--color-accent)] mb-4">// {g.label}</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {g.items.map((it) => <TechCard id={it.id as any} caption={it.caption} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  </ProjectShell>
+</Layout>

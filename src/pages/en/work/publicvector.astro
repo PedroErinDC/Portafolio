@@ -2,16 +2,40 @@
 import Layout from '../../../layouts/Layout.astro';
 import ProjectShell from '../../../components/ProjectShell.astro';
 import PublicVectorDemo from '../../../components/PublicVectorDemo.astro';
+import PublicVectorFeatures from '../../../components/PublicVectorFeatures.astro';
+import TechCard from '../../../components/TechCard.astro';
+
+const stackGroups = [
+  {
+    label: 'AI & NLP',
+    items: [
+      { id: 'whisper',  caption: 'transcription',          reason: 'Faster-Whisper large-v3 is the most accurate open-source ASR for Mexican Spanish and auto-detects language per segment. The "faster" fork uses CTranslate2 and is ~4× faster than the original Whisper, making 24/7 multi-channel processing viable on a single GPU.' },
+      { id: 'bgem3',    caption: 'embeddings',             reason: 'BGE-M3 produces 1024-d embeddings with native multilingual support (Spanish, English, Portuguese) and tops MTEB recall for retrieval. Supports dense + sparse + multi-vector search simultaneously. Runs locally with no API costs.' },
+      { id: 'qwen',     caption: 'context + sentiment',    reason: 'Qwen2.5-14B follows Spanish instructions better than Llama 3 8B and fits in 28 GB of VRAM with FP16. Returns reliable structured JSON for context + sentiment extraction without fragile parsers, and it is free — no per-token cost.' },
+      { id: 'milvus',   caption: 'vector DB',              reason: 'Milvus is designed for billions of vectors with HNSW and IVF indices. Lets you filter by channel, date or language inside the same vector query (hybrid search), critical for time-bounded reports. Open-source and self-hosted, no lock-in.' },
+    ],
+  },
+  {
+    label: 'Backend & microservices',
+    items: [
+      { id: 'java',         caption: 'language',       reason: 'Java 17 LTS is stable for services that run 24/7. Records and sealed classes reduce boilerplate. Its maturity in JVM tuning lets you fine-tune GC and memory for long-running audio-processing jobs.' },
+      { id: 'springboot',   caption: 'microservices',  reason: 'Spring Boot 3 is the de facto standard for enterprise Java microservices. Auto-config, Actuator metrics, healthchecks and Spring Data for PostgreSQL — everything a production-ready microservice needs without reinventing.' },
+      { id: 'fastapi',      caption: 'AI API',         reason: 'FastAPI is the ideal framework for serving ML models in Python. Native async, Pydantic typed validation, auto OpenAPI, and direct compatibility with PyTorch/Transformers. Hot-reload speeds up prompt iteration.' },
+      { id: 'redisstream',  caption: 'orchestration',  reason: 'Redis Streams provides durable queues with consumer groups and acknowledgment. Sub-millisecond latency between capture → Whisper → BGE-M3 → Milvus. Simpler than Kafka when volume is low-to-medium and services share a network.' },
+      { id: 'postgresql',   caption: 'metadata',       reason: 'PostgreSQL stores structured metadata (channels, segments, mentions) with referential integrity. JSONB for flexible fields (LLM output), date partitioning for large tables and triggers for auditing — no surprises.' },
+      { id: 'ffmpeg',       caption: '24/7 IPTV',      reason: 'FFmpeg is the de facto standard for RTSP/IPTV capture. Handles every broadcast codec (H.264/HEVC/AAC), auto-segments into fixed blocks and reconnects on stream drops. No serious alternative exists.' },
+    ],
+  },
+  {
+    label: 'Frontend',
+    items: [
+      { id: 'nextjs',     caption: 'dashboard', reason: 'Next.js 14 with App Router enables SSR + ISR so the dashboard loads instantly even with thousands of mentions. Server actions handle mutations without extra endpoints and React 19 (Suspense + transitions) keeps filtering smooth.' },
+      { id: 'typescript', caption: 'language',  reason: 'TypeScript on both frontend and Node backend prevents schema errors when consuming the dashboard API. Large refactors (renames, shape changes) are done with compiler confidence rather than fragile tests.' },
+    ],
+  },
+] as const;
 
 const lang = 'en' as const;
-const highlights = [
-  '24/7 IPTV channel recording with automatic 30-minute segmentation.',
-  'Multilingual transcription with Faster-Whisper large-v3, ~28MB per audio block.',
-  'Semantic search pipeline with BGE-M3 embeddings (1024-dim) over Milvus.',
-  'Context extraction and sentiment analysis with Qwen2.5-14B (28GB VRAM).',
-  'Microservices architecture in Java 17 + Spring Boot 3 and FastAPI, orchestrated with Redis Streams.',
-  'Next.js frontend with mentions dashboard, sentiment, channel/date filters and audio playback.',
-];
 ---
 
 <Layout title="PublicVector — Pedro Erin Diaz Cumes" lang={lang}>
@@ -22,70 +46,23 @@ const highlights = [
     tags={['Faster-Whisper', 'BGE-M3', 'Milvus', 'Qwen2.5-14B', 'Spring Boot 3', 'FastAPI', 'Redis Streams', 'PostgreSQL', 'Next.js', 'Java 17']}
     year="2025"
     role="Software Engineer · NLP & Backend"
-    backHref="/en/work"
+    backHref="/en/projects"
     category="work"
+    hideHighlightsTitle={true}
   >
     <PublicVectorDemo slot="demo" lang={lang} />
 
-    <ul slot="highlights" class="space-y-3">
-      {highlights.map((h) => (
-        <li class="flex items-start gap-3">
-          <span class="mt-2 inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
-          <span class="text-sm md:text-base text-[color:var(--color-fg-muted)] leading-relaxed">{h}</span>
-        </li>
+    <PublicVectorFeatures slot="highlights" lang={lang} />
+
+    <div slot="architecture" class="space-y-8">
+      {stackGroups.map((g) => (
+        <div>
+          <h3 class="font-mono text-xs uppercase tracking-widest text-[color:var(--color-accent)] mb-4">// {g.label}</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {g.items.map((it) => <TechCard id={it.id as any} caption={it.caption} reason={(it as any).reason} />)}
+          </div>
+        </div>
       ))}
-    </ul>
-
-    <div slot="architecture" class="space-y-6">
-      <div class="card p-5 md:p-6">
-        <pre class="font-mono text-xs md:text-sm leading-relaxed overflow-x-auto text-[color:var(--color-fg-muted)]"><code>{`┌────────────────────────────────────────────────────────────────────┐
-│                       INFERENCE SERVER                             │
-│                                                                    │
-│  IPTV ──▶ ffmpeg 24/7 ──▶ .mp3 segments (30 min, ~28 MB)           │
-│                                  │                                 │
-│                                  ▼                                 │
-│  ┌───────────────────────────────────────────────────┐             │
-│  │  GPU pool (port :9021)                            │             │
-│  │  ├─ Whisper large-v3 (6 GB VRAM)                  │             │
-│  │  ├─ BGE-M3 embeddings (2 GB VRAM)                 │             │
-│  │  └─ Qwen2.5-14B context+sentiment (28 GB VRAM)    │             │
-│  └───────────────────────────────────────────────────┘             │
-│                                  │                                 │
-│                                  ▼                                 │
-│  PostgreSQL (text)   │   Milvus (1024-d vectors)   │  Redis (queue)│
-└────────────────────────┬───────────────────────────────────────────┘
-                         │
-                         ▼
-┌────────────────────────────────────────────────────────────────────┐
-│             MICROSERVICES (Java 17 + Spring Boot 3)                │
-│  ingest · transcribe · search · context · sentiment                │
-│  orchestrated by Redis Streams (async, high volume)                │
-└────────────────────────┬───────────────────────────────────────────┘
-                         │
-                         ▼
-┌────────────────────────────────────────────────────────────────────┐
-│                  FRONTEND (Next.js · :3003)                        │
-│  Mentions dashboard · filters · audio · sentiment                  │
-└────────────────────────────────────────────────────────────────────┘`}</code></pre>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-4">
-        <div class="card p-5">
-          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// ingest</p>
-          <p class="text-sm font-medium mb-1">FFmpeg + Whisper</p>
-          <p class="text-xs text-[color:var(--color-fg-muted)]">IPTV capture, multilingual transcription</p>
-        </div>
-        <div class="card p-5">
-          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// search</p>
-          <p class="text-sm font-medium mb-1">BGE-M3 + Milvus</p>
-          <p class="text-xs text-[color:var(--color-fg-muted)]">1024-dim embeddings, vector DB</p>
-        </div>
-        <div class="card p-5">
-          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// analysis</p>
-          <p class="text-sm font-medium mb-1">Qwen2.5-14B</p>
-          <p class="text-xs text-[color:var(--color-fg-muted)]">Per-mention context and sentiment</p>
-        </div>
-      </div>
     </div>
   </ProjectShell>
 </Layout>

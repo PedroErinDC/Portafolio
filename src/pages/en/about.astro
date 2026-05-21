@@ -1,0 +1,138 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const lang = 'en' as const;
+
+const experience = [
+  {
+    role: 'Software Engineer · AI & Full-Stack',
+    company: 'Celestial Dynamics',
+    period: 'April 2025 — Present',
+    location: 'On-site · Mexico City',
+    bullets: [
+      'Built industrial computer vision systems (CEDIS Vision) and NLP platforms (PublicVector).',
+      'Model optimization for edge computing with TensorRT FP16 on Jetson Nano.',
+      'Modern full-stack architectures: React 19, Spring Boot 3, FastAPI, Node.js 22 + tRPC.',
+      'Loitering detection with YOLO and trajectory metrics, social automation with n8n.',
+    ],
+  },
+  {
+    role: 'Administrative Assistant',
+    company: 'Servicios de Protección y Prevención León',
+    period: '2025',
+    location: 'Mexico City',
+    bullets: [
+      'Automated electronic invoicing tracking with advanced spreadsheets.',
+      'Built an Excel-based database for operational personnel records.',
+    ],
+  },
+  {
+    role: 'IT Assistant',
+    company: 'Institute of Geology, UNAM',
+    period: '2023 — 2024',
+    location: 'Ciudad Universitaria, Mexico City',
+    bullets: [
+      'Developed and modified institutional web templates with HTML, CSS, and JavaScript.',
+      'Preventive and corrective hardware maintenance, software install and configuration.',
+    ],
+  },
+];
+
+const education = [
+  { title: 'BSc in Informatics', org: 'FCA, UNAM', period: '2020 — 2024', desc: 'Specialization in software and AI product lifecycle.' },
+  { title: 'Cloud Computing', org: 'IBM · FCA-UNAM', period: '144 hrs', desc: 'Cloud architectures and distributed services certification.' },
+  { title: '3D Computer-Aided Design (Revit)', org: 'School of Architecture, UNAM', period: '72 hrs', desc: 'BIM 3D modeling and technical documentation.' },
+];
+
+const softSkills = [
+  'Complex problem solving',
+  'Multi-disciplinary teamwork',
+  'Effective technical communication',
+  'Self-directed learning',
+  'Analytical thinking',
+  'Adaptability',
+  'Time management',
+  'Creativity',
+];
+---
+
+<Layout title="About — Pedro Erin Diaz Cumes" lang={lang}>
+  <section class="container-page pt-16 pb-10">
+    <p class="section-kicker">About</p>
+    <h1 class="text-3xl md:text-5xl font-semibold mb-6 text-balance leading-tight">
+      UNAM graduate focused on <span class="gradient-text">applied AI</span> and modern architectures
+    </h1>
+    <p class="text-base md:text-lg text-[color:var(--color-fg-muted)] max-w-3xl text-balance leading-relaxed">
+      BSc in Informatics from UNAM's Faculty of Accounting and Administration (2020—2024). I cover the full lifecycle of software and AI products: from training and optimizing vision and NLP models to deploying them in production and building the frontends that expose them. I lean on generative AI tools (Claude, Codex) to prototype fast without sacrificing quality.
+    </p>
+  </section>
+
+  <section class="container-page pb-16">
+    <div class="grid md:grid-cols-3 gap-4 mb-12">
+      <div class="card p-5">
+        <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// location</p>
+        <p class="text-base font-medium">Mexico City, MX</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)] mt-1">Venustiano Carranza · CST timezone</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// languages</p>
+        <p class="text-base font-medium">Spanish · English</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)] mt-1">Native · Intermediate (fluent technical reading)</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-mono text-xs text-[color:var(--color-accent)] mb-2">// availability</p>
+        <p class="text-base font-medium">Full-time / Collaborations</p>
+        <p class="text-xs text-[color:var(--color-fg-muted)] mt-1">On-site CDMX or remote</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page mb-20">
+    <h2 class="text-2xl md:text-3xl font-semibold mb-2">Work experience</h2>
+    <p class="text-sm text-[color:var(--color-fg-muted)] mb-8">Recent trajectory.</p>
+
+    <div class="relative pl-6 md:pl-8 border-l border-[color:var(--color-border)] space-y-10">
+      {experience.map((e, i) => (
+        <div class="relative">
+          <span class={`absolute -left-[33px] md:-left-[41px] top-1 w-3 h-3 rounded-full ring-4 ring-[color:var(--color-bg)] ${i === 0 ? 'bg-[color:var(--color-accent)]' : 'bg-[color:var(--color-border-strong)]'}`}></span>
+
+          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-1">
+            <h3 class="text-lg md:text-xl font-semibold">{e.role}</h3>
+            <span class="font-mono text-xs text-[color:var(--color-fg-dim)]">@ {e.company}</span>
+          </div>
+          <p class="font-mono text-xs text-[color:var(--color-fg-muted)] mb-4">{e.period} · {e.location}</p>
+
+          <ul class="space-y-2">
+            {e.bullets.map((b) => (
+              <li class="flex items-start gap-2 text-sm text-[color:var(--color-fg-muted)] leading-relaxed">
+                <span class="mt-1.5 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="container-page mb-20">
+    <h2 class="text-2xl md:text-3xl font-semibold mb-8">Education</h2>
+    <div class="grid md:grid-cols-3 gap-4">
+      {education.map((ed) => (
+        <div class="card p-5">
+          <p class="font-mono text-xs text-[color:var(--color-accent)] mb-3">// {ed.period}</p>
+          <h3 class="text-base font-semibold mb-1 leading-tight">{ed.title}</h3>
+          <p class="text-xs text-[color:var(--color-fg-muted)] mb-3">{ed.org}</p>
+          <p class="text-xs text-[color:var(--color-fg-dim)] leading-relaxed">{ed.desc}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="container-page mb-20">
+    <h2 class="text-2xl md:text-3xl font-semibold mb-8">Soft skills</h2>
+    <div class="flex flex-wrap gap-2">
+      {softSkills.map((s) => <span class="badge">{s}</span>)}
+    </div>
+  </section>
+</Layout>

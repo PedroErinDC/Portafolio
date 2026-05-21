@@ -1,0 +1,92 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CompanyCard from '../../components/CompanyCard.astro';
+import SectionHeader from '../../components/SectionHeader.astro';
+
+const lang = 'en' as const;
+
+const celestialProjects = [
+  {
+    title: 'CEDIS Vision — Pallet and Sack Detection',
+    summary: 'Industrial CCTV with pallet detection and sack counting on Jetson Nano. YOLO11-seg + RF-DETR + TensorRT.',
+    href: '/en/work/cedis-vision',
+    tags: ['yolo', 'tensorrt', 'jetson', 'react'],
+    video: '/demos/cedis-thumb.mp4',
+    videoPoster: '/demos/cedis-thumb-poster.jpg',
+  },
+  {
+    title: 'PublicVector — Media Monitoring',
+    summary: 'TV/Radio 24/7 monitoring with Whisper transcription, Milvus semantic search and Qwen2.5 analysis.',
+    href: '/en/work/publicvector',
+    tags: ['whisper', 'milvus', 'qwen', 'springboot'],
+    video: '/demos/publicvector-thumb.mp4',
+    videoPoster: '/demos/publicvector-thumb-poster.jpg',
+  },
+];
+
+const unamProjects = [
+  {
+    title: 'Educational Game — Unity',
+    summary: 'Pixel-art 2D platformer with checkpoints, permanent power-ups, autonomous traps and cutscenes. Built in Unity with C# as an academic project at UNAM.',
+    href: '/en/school/unity-game',
+    tags: ['unity', 'csharp', 'tilemap', 'gamedesign'],
+    video: '/demos/unity/mec-checkpoints.mp4',
+    videoPoster: '/demos/unity/mec-checkpoints-poster.jpg',
+  },
+];
+---
+
+<Layout title="Projects — Pedro Erin Diaz Cumes" lang={lang}>
+  <div class="container-page pt-14 md:pt-20 pb-6">
+    <p class="section-kicker">Portfolio</p>
+    <h1 class="text-3xl md:text-5xl font-semibold mb-4 text-balance">Projects</h1>
+    <p class="text-base md:text-lg text-[color:var(--color-fg-muted)] max-w-2xl text-balance">
+      Production systems and academic work. Each company or institution groups the projects I built there.
+    </p>
+  </div>
+
+  <section class="container-page pb-6 pt-6">
+    <SectionHeader
+      number="01"
+      title="Professional projects"
+      subtitle="Production systems built at companies."
+      icon="briefcase"
+    />
+    <CompanyCard
+      logo="/companies/celestial.png"
+      logoAlt="Celestial Dynamics"
+      company="Celestial Dynamics"
+      role="Software Engineer · AI & Full-Stack"
+      period="April 2025 — Present"
+      location="On-site · Mexico City"
+      projects={celestialProjects}
+      ctaLabel="View details"
+      projectsLabel="Projects"
+    />
+  </section>
+
+  <section class="container-page pb-16 pt-10">
+    <SectionHeader
+      number="02"
+      title="School projects"
+      subtitle="Academic work during my bachelor's degree."
+      icon="graduation"
+      accentColor="#C8A961"
+    />
+    <CompanyCard
+      logo="/companies/unam.png"
+      logoAlt="National Autonomous University of Mexico"
+      company="UNAM"
+      role="BSc in Informatics"
+      affiliation="School of Accounting and Administration"
+      period="2020 — 2024"
+      location="Ciudad Universitaria · Mexico City"
+      url="https://www.fca.unam.mx/"
+      projects={unamProjects}
+      ctaLabel="View details"
+      projectsLabel="Projects"
+      logoBg="radial-gradient(120% 100% at 0% 0%, #2B5BA8 0%, #1F3F73 55%, #14284D 100%)"
+      logoAccent={[ 'rgba(200, 169, 97, 0.55)', 'rgba(43, 91, 168, 0.45)' ]}
+    />
+  </section>
+</Layout>

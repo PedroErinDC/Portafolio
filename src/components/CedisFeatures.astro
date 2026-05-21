@@ -1,0 +1,1150 @@
+---
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const isES = lang === 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const cams = [
+  { id: '01', label: isES ? 'Andén Norte' : 'North Dock' },
+  { id: '02', label: isES ? 'Recepción' : 'Receiving' },
+  { id: '03', label: isES ? 'Andén Sur' : 'South Dock' },
+  { id: '04', label: isES ? 'Almacén' : 'Warehouse' },
+];
+
+const hourly = [4, 7, 9, 12, 8, 11, 14, 13, 16, 18, 15, 10];
+const peak = Math.max(...hourly);
+const totalToday = hourly.reduce((a, b) => a + b, 0);
+
+const reportLabel  = isES ? 'Pallets por hora · hoy'    : 'Pallets per hour · today';
+const reportPeak   = isES ? 'pico'                       : 'peak';
+const reportTotal  = isES ? 'pallets hoy'               : 'pallets today';
+const reportAvg    = isES ? 'prom. confianza'           : 'avg confidence';
+
+// Precompute 3 different pseudo-QR patterns (25x25 cells). Different `seedOffset`
+// per scenario so each looks unique.
+function buildQr(seedOffset: number): { x: number; y: number }[] {
+  const cells: { x: number; y: number }[] = [];
+  for (let y = 0; y < 25; y++) {
+    for (let x = 0; x < 25; x++) {
+      const isFinder =
+        (x < 7 && y < 7) ||
+        (x > 17 && y < 7) ||
+        (x < 7 && y > 17);
+      let on = false;
+      if (isFinder) {
+        const fx = x < 7 ? x : (x > 17 ? x - 18 : 0);
+        const fy = y < 7 ? y : (y > 17 ? y - 18 : 0);
+        const inOuter = fx === 0 || fx === 6 || fy === 0 || fy === 6;
+        const inInner = fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4;
+        on = inOuter || inInner;
+      } else {
+        const seed = (((x + seedOffset) * 73856093) ^ ((y + seedOffset * 3) * 19349663)) >>> 0;
+        on = (seed % 7) < 3;
+      }
+      if (on) cells.push({ x, y });
+    }
+  }
+  return cells;
+}
+
+const qrPatterns = [buildQr(0), buildQr(11), buildQr(23)];
+
+// 3 scenarios that cycle. Each carries metadata + total sack count.
+const qrScenarios = [
+  { folio: 'P-1042', sacks: 5, cam: '01', ts: '2026-01-23 13:42' },
+  { folio: 'P-1043', sacks: 7, cam: '02', ts: '2026-01-23 14:18' },
+  { folio: 'P-1044', sacks: 3, cam: '04', ts: '2026-01-23 14:51' },
+];
+---
+
+<section class="space-y-6">
+
+  <!-- Objective + my role -->
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="card p-5">
+      <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-2">// {isES ? 'objetivo' : 'objective'}</p>
+      <h3 class="text-base font-semibold mb-2">{isES ? 'Automatizar el conteo de pallets y sacos en CEDIS' : 'Automate pallet & sack counting in distribution centers'}</h3>
+      <p class="text-sm text-[color:var(--color-fg-muted)] leading-relaxed">
+        {isES
+          ? 'Reemplazar la supervisión manual del andén de descarga con visión computacional en vivo. Reduce errores de conteo, acelera la facturación y deja trazabilidad por pallet sin operadores extra.'
+          : 'Replace manual loading-dock supervision with live computer vision. Reduces counting errors, speeds up invoicing, and adds per-pallet traceability without extra staff.'}
+      </p>
+    </div>
+
+    <div class="card p-5">
+      <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-2">// {isES ? 'mi aportación principal' : 'my main contribution'}</p>
+      <h3 class="text-base font-semibold mb-2">{isES ? 'Entrenamiento del modelo con ROI + segmentación' : 'Model training with ROI + segmentation'}</h3>
+      <p class="text-sm text-[color:var(--color-fg-muted)] leading-relaxed">
+        {isES
+          ? 'Etiquetado del dataset propio en CVAT, entrenamiento de YOLO con segmentación instance-level y regiones de interés (ROI) por andén, y exportación del modelo a TensorRT FP16 para correr en Jetson Nano.'
+          : 'Labeling of the in-house dataset in CVAT, training of YOLO with instance segmentation and per-dock regions of interest (ROI), and export to TensorRT FP16 for Jetson Nano edge inference.'}
+      </p>
+    </div>
+  </div>
+
+  <header class="flex items-baseline justify-between flex-wrap gap-2 pt-2">
+    <h2 class="text-2xl font-semibold">{isES ? 'Aportaciones al sistema' : 'My contributions to the system'}</h2>
+    <p class="font-mono text-xs text-[color:var(--color-fg-dim)]">{isES ? '// lo que construí' : '// what I built'}</p>
+  </header>
+
+  <div class="grid lg:grid-cols-3 gap-4 lg:gap-5">
+
+    <!-- DASHBOARD 4-CAM (spans 2 cols on desktop) -->
+    <div class="card p-5 lg:col-span-2 overflow-hidden relative">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-1">// dashboard</p>
+          <h3 class="text-lg font-semibold">{isES ? 'Dashboard de 4 cámaras simultáneas' : '4-camera live dashboard'}</h3>
+          <p class="text-sm text-[color:var(--color-fg-muted)] mt-1">
+            {isES
+              ? 'Visualización en cuadrícula con streaming HLS de baja latencia, indicadores de salud por cámara y switching entre vistas individuales.'
+              : 'Grid view with low-latency HLS streaming, per-camera health indicators and switch to single-view.'}
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mt-4">
+        {cams.map((c, i) => (
+          <div class="feat-cam relative aspect-video rounded-md overflow-hidden border border-[color:var(--color-border)] bg-[color:var(--color-bg)]" style={`--di: ${i}`}>
+            <video
+              src={`${base}/demos/cams/cam-0${i + 1}.mp4`}
+              poster={`${base}/demos/cams/cam-0${i + 1}.jpg`}
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+              aria-label={`Vista CAM-${c.id}`}
+              class="absolute inset-0 w-full h-full object-cover"
+            ></video>
+            <span class="feat-cam__noise"></span>
+            <span class="feat-cam__vignette"></span>
+            <svg viewBox="0 0 100 56" preserveAspectRatio="none" class="absolute inset-0 w-full h-full z-10">
+              <path d="M 4 4 L 12 4 M 4 4 L 4 12" stroke="#34d399" stroke-width="0.8" fill="none"/>
+              <path d="M 96 4 L 88 4 M 96 4 L 96 12" stroke="#34d399" stroke-width="0.8" fill="none"/>
+              <path d="M 4 52 L 12 52 M 4 52 L 4 44" stroke="#34d399" stroke-width="0.8" fill="none"/>
+              <path d="M 96 52 L 88 52 M 96 52 L 96 44" stroke="#34d399" stroke-width="0.8" fill="none"/>
+            </svg>
+            <div class="absolute top-1.5 left-2 flex items-center gap-1.5 z-20 px-1.5 py-0.5 rounded bg-[color:var(--color-bg)]/60 backdrop-blur-sm">
+              <span class="inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] feat-cam__live"></span>
+              <span class="font-mono text-[9px] text-[color:var(--color-accent)]">CAM-{c.id}</span>
+            </div>
+            <div class="absolute bottom-1.5 left-2 z-20 px-1.5 py-0.5 rounded bg-[color:var(--color-bg)]/60 backdrop-blur-sm">
+              <p class="font-mono text-[9px] text-[color:var(--color-fg-muted)]">{c.label}</p>
+            </div>
+            <div class="absolute top-1.5 right-2 z-20 px-1.5 py-0.5 rounded bg-[color:var(--color-bg)]/60 backdrop-blur-sm">
+              <span class="font-mono text-[8px] text-[color:var(--color-accent)]">{(27 + i * 0.4).toFixed(1)} fps</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="mt-4 flex items-center justify-between text-xs font-mono text-[color:var(--color-fg-dim)] flex-wrap gap-2">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
+          {isES ? '4/4 streams activos' : '4/4 streams active'}
+        </span>
+        <span>HLS · 720p · latencia &lt;1.5s</span>
+      </div>
+    </div>
+
+    <!-- QR CODE GENERATION -->
+    <div class="card p-5 flex flex-col relative overflow-hidden" id="feat-qr-card" data-state="idle">
+      <div class="flex items-start justify-between gap-3 mb-1">
+        <div>
+          <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-1">// qr emission</p>
+          <h3 class="text-lg font-semibold">{isES ? 'Generación automática de QR' : 'Automatic QR generation'}</h3>
+        </div>
+        <span class="font-mono text-[10px] text-[color:var(--color-fg-muted)] shrink-0 mt-1" id="feat-qr-scn-idx">1/3</span>
+      </div>
+      <p class="text-sm text-[color:var(--color-fg-muted)] mb-4">
+        {isES
+          ? 'Al completar el conteo de sacos por pallet, el sistema emite un QR con metadata (folio, fecha, conteo, cámara) listo para escanear en almacén.'
+          : 'When sack count completes per pallet, the system emits a QR with metadata (folio, date, count, camera) ready to scan at warehouse.'}
+      </p>
+
+      <div class="flex-1 flex items-center justify-center my-2 relative" id="feat-qr-arena">
+        <div class="feat-qr-stage relative w-32 h-32 md:w-36 md:h-36">
+          <!-- 3 QR patterns, only active scenario visible -->
+          {qrPatterns.map((cells, i) => (
+            <div class={`feat-qr-pattern ${i === 0 ? 'feat-qr-pattern--active' : ''}`} data-pattern={i}>
+              <div class="p-3 rounded-lg bg-white shadow-lg shadow-[color:var(--color-accent-glow)] feat-qr-clickable">
+                <svg viewBox="0 0 25 25" shape-rendering="crispEdges" class="w-24 h-24 md:w-28 md:h-28">
+                  {cells.map((c) => <rect x={c.x} y={c.y} width="1" height="1" fill="#0a0e14"/>)}
+                </svg>
+              </div>
+            </div>
+          ))}
+
+          <!-- Click ripple at QR center (appears briefly when virtual cursor clicks) -->
+          <div class="feat-qr-ripple" id="feat-qr-ripple" aria-hidden="true"></div>
+        </div>
+
+        <!-- Floating info card (slides in after virtual click) -->
+        <div class="feat-qr-card-pop" id="feat-qr-card-pop" aria-hidden="true">
+          <div class="flex items-center gap-2 mb-2 pb-2 border-b border-[color:var(--color-border)]">
+            <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-[color:var(--color-accent)] text-[color:var(--color-bg)]">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)]">{isES ? 'PALLET ESCANEADO' : 'PALLET SCANNED'}</p>
+          </div>
+          <div class="font-mono text-[11px] space-y-1">
+            <div class="flex justify-between gap-3"><span class="text-[color:var(--color-fg-dim)]">folio</span><span class="text-[color:var(--color-fg)]" id="feat-qr-pop-folio">—</span></div>
+            <div class="flex justify-between gap-3"><span class="text-[color:var(--color-fg-dim)]">sacos</span><span class="text-[color:var(--color-accent)]" id="feat-qr-pop-sacks">—</span></div>
+            <div class="flex justify-between gap-3"><span class="text-[color:var(--color-fg-dim)]">cam</span><span class="text-[color:var(--color-fg)]" id="feat-qr-pop-cam">—</span></div>
+            <div class="flex justify-between gap-3"><span class="text-[color:var(--color-fg-dim)]">ts</span><span class="text-[color:var(--color-fg)]" id="feat-qr-pop-ts">—</span></div>
+            <div class="flex justify-between gap-3 pt-1 mt-1 border-t border-[color:var(--color-border)]"><span class="text-[color:var(--color-fg-dim)]">turno</span><span class="text-[color:var(--color-fg)]" id="feat-qr-pop-shift">—</span></div>
+          </div>
+        </div>
+
+        <!-- Virtual cursor (animated demo pointer) -->
+        <svg class="feat-qr-cursor" id="feat-qr-cursor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 3 L19 12 L12 13 L9 20 Z" fill="#fff" stroke="#0a0e14" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-fg-dim)] text-center mt-2" id="feat-qr-hint">
+        {isES ? '— demostración automática —' : '— automated demo —'}
+      </p>
+    </div>
+
+    <!-- RTSP MULTI-STREAM HEALTH -->
+    <div class="card p-5 flex flex-col">
+      <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-1">// rtsp ingest</p>
+      <h3 class="text-lg font-semibold mb-1">{isES ? 'Ingesta RTSP multi-cámara' : 'Multi-camera RTSP ingest'}</h3>
+      <p class="text-sm text-[color:var(--color-fg-muted)] mb-4">
+        {isES
+          ? 'ffmpeg captura simultánea de 4 streams RTSP, conversión a HLS y healthcheck por cámara con auto-reconexión ante stream caído.'
+          : 'ffmpeg simultaneous capture of 4 RTSP streams, conversion to HLS and per-camera healthcheck with auto-reconnect on stream loss.'}
+      </p>
+
+      <div class="space-y-2 mt-auto" id="feat-rtsp-list">
+        {cams.map((c, i) => {
+          const ms = [12, 18, 0, 22][i];
+          return (
+            <div class="feat-rtsp-row flex items-center gap-3 font-mono text-xs" data-idx={i} data-state="idle">
+              <span class="text-[color:var(--color-fg-muted)] w-14 shrink-0">CAM-{c.id}</span>
+
+              <span class="feat-rtsp-state shrink-0 inline-flex items-center justify-center w-5 h-5">
+                <!-- spinner -->
+                <svg class="feat-rtsp-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="9" stroke-dasharray="40 60" />
+                </svg>
+                <!-- check -->
+                <svg class="feat-rtsp-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <!-- cross -->
+                <svg class="feat-rtsp-cross" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                <!-- idle dot -->
+                <span class="feat-rtsp-idle"></span>
+              </span>
+
+              <div class="flex-1 h-1 rounded-full bg-[color:var(--color-border)] overflow-hidden relative">
+                <span class="absolute inset-y-0 left-0 feat-rtsp-bar" data-ms={ms}></span>
+              </div>
+
+              <span class="feat-rtsp-value w-20 text-right shrink-0">—</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-[color:var(--color-border)] flex items-center justify-between text-xs font-mono">
+        <span class="text-[color:var(--color-fg-dim)]">{isES ? 'estado red' : 'network'}</span>
+        <span id="feat-rtsp-status" class="inline-flex items-center gap-1.5 text-[color:var(--color-accent)]">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
+          —
+        </span>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="card p-5 lg:col-span-2 flex flex-col relative">
+      <div class="flex items-start justify-between gap-3 mb-1">
+        <div>
+          <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-1">// analytics</p>
+          <h3 class="text-lg font-semibold">{isES ? 'Reportes y métricas operativas' : 'Operational reports & metrics'}</h3>
+        </div>
+        <span class="font-mono text-[10px] text-[color:var(--color-accent)] inline-flex items-center gap-1.5 shrink-0 mt-1">
+          <span class="inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
+          LIVE
+        </span>
+      </div>
+      <p class="text-sm text-[color:var(--color-fg-muted)] mb-4">
+        {isES
+          ? 'Exportación CSV / PDF de conteos diarios, picos por turno y promedio de confianza por cámara.'
+          : 'CSV / PDF export of daily counts, shift peaks and avg confidence per camera.'}
+      </p>
+
+      <div class="feat-dash" id="feat-dash">
+
+        <!-- PANEL 0: hourly bar chart -->
+        <div class="feat-dash__panel" data-panel="0">
+          <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)] mb-2">{reportLabel}</p>
+          <svg viewBox="0 0 240 80" class="w-full h-20" id="feat-bars-svg">
+            {hourly.map((v, i) => {
+              const h = (v / peak) * 70;
+              const x = i * 20 + 2;
+              const y = 78 - h;
+              const isPeak = v === peak;
+              const isLive = i === hourly.length - 1;
+              return (
+                <g>
+                  <rect x={x} y={y} width="14" height={h} rx="2"
+                        fill={isPeak ? '#34d399' : 'rgba(52, 211, 153, 0.35)'}
+                        class={`feat-bar ${isLive ? 'feat-bar--live' : ''}`}
+                        style={`--di: ${i}`}
+                        data-base={v}
+                        data-idx={i}/>
+                </g>
+              );
+            })}
+            <line x1="0" y1="78" x2="240" y2="78" stroke="#1f2733" stroke-width="1"/>
+          </svg>
+
+          <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[color:var(--color-border)]">
+            <div>
+              <p class="font-mono text-[9px] text-[color:var(--color-fg-dim)] uppercase">{reportTotal}</p>
+              <p class="text-lg font-semibold text-[color:var(--color-accent)] feat-stat" id="feat-stat-total" data-target={totalToday}>0</p>
+            </div>
+            <div>
+              <p class="font-mono text-[9px] text-[color:var(--color-fg-dim)] uppercase">{reportPeak}</p>
+              <p class="text-lg font-semibold feat-stat" id="feat-stat-peak" data-target={peak}><span class="feat-stat__val">0</span><span class="text-xs text-[color:var(--color-fg-dim)]"> /h</span></p>
+            </div>
+            <div>
+              <p class="font-mono text-[9px] text-[color:var(--color-fg-dim)] uppercase">{reportAvg}</p>
+              <p class="text-lg font-semibold feat-stat" id="feat-stat-conf" data-target="92"><span class="feat-stat__val">0</span><span class="text-xs text-[color:var(--color-fg-dim)]">%</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 1: donut / radial -->
+        <div class="feat-dash__panel" data-panel="1">
+          <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)] mb-2">{isES ? 'Cumplimiento de turno · hoy' : 'Shift target · today'}</p>
+
+          <div class="flex items-center gap-5">
+            <div class="relative shrink-0 w-28 h-28 md:w-32 md:h-32">
+              <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border)" stroke-width="9"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#34d399" stroke-width="9"
+                        stroke-linecap="round" stroke-dasharray="264"
+                        stroke-dashoffset="264" id="feat-donut-arc"/>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <p class="text-2xl md:text-3xl font-semibold text-[color:var(--color-accent)] leading-none" id="feat-donut-pct">0%</p>
+                <p class="font-mono text-[9px] text-[color:var(--color-fg-dim)] uppercase mt-1">{isES ? 'meta 160' : 'goal 160'}</p>
+              </div>
+            </div>
+
+            <div class="flex-1 space-y-2 text-xs font-mono">
+              <div class="flex items-center justify-between">
+                <span class="text-[color:var(--color-fg-dim)]">{isES ? 'turno actual' : 'shift'}</span>
+                <span class="text-[color:var(--color-fg)]">vespertino</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[color:var(--color-fg-dim)]">{isES ? 'pallets' : 'pallets'}</span>
+                <span class="text-[color:var(--color-accent)]"><span id="feat-donut-count">0</span> / 160</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[color:var(--color-fg-dim)]">{isES ? 'operadores' : 'operators'}</span>
+                <span class="text-[color:var(--color-fg)]">4 activos</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[color:var(--color-fg-dim)]">{isES ? 'eta cierre' : 'eta close'}</span>
+                <span class="text-[color:var(--color-fg)]">~ 18:42</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: KPI grid with sparklines -->
+        <div class="feat-dash__panel" data-panel="2">
+          <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)] mb-2">{isES ? 'Tendencia · últimos 7 días' : 'Trend · last 7 days'}</p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3 rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-mono text-[9px] text-[color:var(--color-fg-dim)] uppercase">{isES ? 'Pallets/día' : 'Pallets/day'}</p>
+                <span class="font-mono text-[9px] text-[color:var(--color-accent)] inline-flex items-center gap-0.5">↗ +8.4%</span>
+              </div>
+              <p class="text-xl font-semibold text-[color:var(--color-accent)]">142</p>
+              <svg viewBox="0 0 100 22" class="w-full h-5 mt-1">
+                <polyline points="0,16 16,14 32,10 48,12 64,8 80,6 100,4"
+                          fill="none" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" class="feat-spark"/>
+                <circle cx="100" cy="4" r="1.8" fill="#34d399"/>
+              </svg>
+            </div>
+            <div class="p-3 rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-mono text-[9px] text-[color:var(--color-fg-dim)] uppercase">{isES ? 'Tiempo prom.' : 'Avg time'}</p>
+                <span class="font-mono text-[9px] text-[#fb7185] inline-flex items-center gap-0.5">↘ -12s</span>
+              </div>
+              <p class="text-xl font-semibold">3:42<span class="text-xs text-[color:var(--color-fg-dim)]"> min</span></p>
+              <svg viewBox="0 0 100 22" class="w-full h-5 mt-1">
+                <polyline points="0,4 16,6 32,8 48,7 64,10 80,12 100,16"
+                          fill="none" stroke="#fb7185" stroke-width="1.5" stroke-linecap="round" class="feat-spark"/>
+                <circle cx="100" cy="16" r="1.8" fill="#fb7185"/>
+              </svg>
+            </div>
+            <div class="p-3 rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-mono text-[9px] text-[color:var(--color-fg-dim)] uppercase">{isES ? 'Precisión' : 'Accuracy'}</p>
+                <span class="font-mono text-[9px] text-[color:var(--color-accent)] inline-flex items-center gap-0.5">↗ +1.2%</span>
+              </div>
+              <p class="text-xl font-semibold text-[color:var(--color-accent)]">94<span class="text-xs text-[color:var(--color-fg-dim)]">%</span></p>
+              <svg viewBox="0 0 100 22" class="w-full h-5 mt-1">
+                <polyline points="0,12 16,11 32,10 48,9 64,8 80,6 100,5"
+                          fill="none" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" class="feat-spark"/>
+                <circle cx="100" cy="5" r="1.8" fill="#34d399"/>
+              </svg>
+            </div>
+            <div class="p-3 rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-mono text-[9px] text-[color:var(--color-fg-dim)] uppercase">{isES ? 'Uptime' : 'Uptime'}</p>
+                <span class="font-mono text-[9px] text-[color:var(--color-violet)] inline-flex items-center gap-0.5">→ stable</span>
+              </div>
+              <p class="text-xl font-semibold">99.8<span class="text-xs text-[color:var(--color-fg-dim)]">%</span></p>
+              <svg viewBox="0 0 100 22" class="w-full h-5 mt-1">
+                <polyline points="0,6 16,7 32,5 48,6 64,5 80,6 100,5"
+                          fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" class="feat-spark"/>
+                <circle cx="100" cy="5" r="1.8" fill="#a78bfa"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-center gap-1.5 mt-4 pt-2">
+        <button class="feat-dot" data-go="0" aria-label="Panel 1"></button>
+        <button class="feat-dot" data-go="1" aria-label="Panel 2"></button>
+        <button class="feat-dot" data-go="2" aria-label="Panel 3"></button>
+      </div>
+
+      <span class="feat-toast" id="feat-toast" aria-hidden="true">
+        <span class="font-mono text-[10px] text-[color:var(--color-bg)] font-bold">+1 PALLET</span>
+      </span>
+    </div>
+
+  </div>
+
+  <!-- Other text-only contributions -->
+  <div class="card p-5 md:p-6">
+    <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-2">// {isES ? 'otras aportaciones' : 'other contributions'}</p>
+    <h3 class="text-base font-semibold mb-4">{isES ? 'Lo demás que construí en este proyecto' : 'Everything else I built on this project'}</h3>
+
+    <ul class="grid sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm text-[color:var(--color-fg-muted)]">
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'API REST de detección (alertas, pallets, métricas) con autenticación X-API-Key.' : 'Detection REST API (alerts, pallets, metrics) with X-API-Key auth.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Endpoint de generación y servido de QR (PNG por folio).' : 'QR generation + serving endpoint (PNG per folio).'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Pipeline de exportación PyTorch → ONNX → TensorRT FP16 con scripts reproducibles.' : 'PyTorch → ONNX → TensorRT FP16 export pipeline with reproducible scripts.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Detector live multi-cámara con auto-reconexión RTSP.' : 'Multi-camera live detector with RTSP auto-reconnect.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Servidor RTSP/ONVIF simulado (onvif_lab) para testing local sin hardware.' : 'Simulated RTSP/ONVIF server (onvif_lab) for hardware-less local testing.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Schema de base de datos en Drizzle ORM con migraciones versionadas.' : 'Drizzle ORM schema with versioned migrations.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Configuración Docker multi-servicio (app, detection, cctv) para deploy.' : 'Multi-service Docker setup (app, detection, cctv) for deployment.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Flujo de etiquetado con CVAT y dataset versionado para reentrenos.' : 'CVAT labeling workflow and versioned dataset for retraining.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Calibración de thresholds de confianza por cámara y por clase.' : 'Per-camera and per-class confidence threshold calibration.'}</span>
+      </li>
+      <li class="flex items-start gap-2.5">
+        <span class="mt-2 inline-block w-1 h-1 rounded-full bg-[color:var(--color-accent)] flex-shrink-0"></span>
+        <span>{isES ? 'Documentación técnica del proyecto: setup Jetson, despliegue, troubleshooting.' : 'Project technical docs: Jetson setup, deployment, troubleshooting.'}</span>
+      </li>
+    </ul>
+  </div>
+
+</section>
+
+<style>
+  /* Camera tile noise — subtle moving grain */
+  .feat-cam {
+    background:
+      radial-gradient(120% 90% at 20% 30%, rgba(52,211,153,0.06) 0%, transparent 60%),
+      linear-gradient(135deg, #0d1320 0%, #08101c 100%);
+  }
+
+  .feat-cam__noise {
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 3px);
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    animation: feat-cam-scan 5s linear infinite;
+    animation-delay: calc(var(--di, 0) * 0.4s);
+  }
+
+  .feat-cam__vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 50% 50%, transparent 50%, rgba(10, 14, 20, 0.55) 100%);
+  }
+
+  @keyframes feat-cam-scan {
+    from { transform: translateY(0); }
+    to   { transform: translateY(8px); }
+  }
+
+  .feat-cam__live {
+    animation: feat-cam-live 1.6s ease-in-out infinite;
+  }
+
+  @keyframes feat-cam-live {
+    0%, 100% { opacity: 1;   transform: scale(1);   }
+    50%      { opacity: 0.4; transform: scale(1.6); }
+  }
+
+  /* QR stage — holds 3 patterns. Active one fades in. */
+  .feat-qr-stage > .feat-qr-pattern {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.85);
+    pointer-events: none;
+    transition: opacity 380ms ease, transform 380ms ease;
+  }
+
+  .feat-qr-pattern--active {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+  }
+
+  /* Ripple at QR center on virtual click */
+  .feat-qr-ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .feat-qr-ripple.feat-qr-ripple--burst {
+    animation: feat-qr-ripple 700ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  @keyframes feat-qr-ripple {
+    0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0.7; }
+    100% { transform: translate(-50%, -50%) scale(6);   opacity: 0;   }
+  }
+
+  /* Virtual cursor (animated demo pointer) */
+  .feat-qr-cursor {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    top: 50%;
+    left: 50%;
+    transform: translate(60px, 50px);
+    opacity: 0;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+    transition:
+      transform 1100ms cubic-bezier(0.45, 0.05, 0.2, 1),
+      opacity 250ms ease;
+    z-index: 30;
+  }
+  .feat-qr-cursor.feat-qr-cursor--visible { opacity: 1; }
+  .feat-qr-cursor.feat-qr-cursor--at-qr   { transform: translate(-50%, -50%); }
+  .feat-qr-cursor.feat-qr-cursor--press   { transform: translate(-50%, -50%) scale(0.85); transition-duration: 100ms; }
+  .feat-qr-cursor.feat-qr-cursor--exit    { transform: translate(80px, -60px); opacity: 0; }
+
+  /* Floating info card (slides up after click) */
+  .feat-qr-card-pop {
+    position: absolute;
+    left: 50%;
+    bottom: -8px;
+    transform: translate(-50%, 8px);
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-accent);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    width: min(220px, 92%);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent),
+      0 18px 32px -12px rgba(0,0,0,0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 250ms ease, transform 320ms cubic-bezier(0.2, 0.9, 0.3, 1);
+    z-index: 20;
+  }
+  .feat-qr-card-pop.feat-qr-card-pop--visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+  }
+
+  .feat-qr-clickable {
+    transition: transform 200ms ease;
+  }
+  #feat-qr-card[data-state="press"] .feat-qr-clickable,
+  #feat-qr-card[data-state="info"]  .feat-qr-clickable {
+    transform: scale(0.97);
+  }
+
+  /* RTSP row state styling */
+  .feat-rtsp-row .feat-rtsp-spinner,
+  .feat-rtsp-row .feat-rtsp-check,
+  .feat-rtsp-row .feat-rtsp-cross,
+  .feat-rtsp-row .feat-rtsp-idle {
+    width: 100%;
+    height: 100%;
+    display: none;
+  }
+
+  .feat-rtsp-row .feat-rtsp-idle {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-border-strong);
+  }
+
+  .feat-rtsp-row[data-state="idle"]       .feat-rtsp-idle    { display: inline-block; }
+  .feat-rtsp-row[data-state="connecting"] .feat-rtsp-spinner { display: block; color: #fbbf24; animation: feat-rtsp-spin 0.9s linear infinite; }
+  .feat-rtsp-row[data-state="valid"]      .feat-rtsp-check   { display: block; color: #34d399; animation: feat-rtsp-pop 280ms cubic-bezier(0.3, 1.3, 0.5, 1); }
+  .feat-rtsp-row[data-state="invalid"]    .feat-rtsp-cross   { display: block; color: #fb7185; animation: feat-rtsp-shake 0.4s ease-out; }
+
+  .feat-rtsp-row[data-state="invalid"]    .feat-rtsp-idle { display: none; }
+
+  @keyframes feat-rtsp-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes feat-rtsp-pop {
+    0%   { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  @keyframes feat-rtsp-shake {
+    0%   { transform: translateX(0); opacity: 0; }
+    20%  { opacity: 1; }
+    25%  { transform: translateX(-3px); }
+    50%  { transform: translateX(3px); }
+    75%  { transform: translateX(-2px); }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+
+  .feat-rtsp-bar {
+    background: var(--color-border-strong);
+    width: 0%;
+    transition: width 600ms cubic-bezier(0.3, 0.9, 0.4, 1), background 300ms ease;
+  }
+
+  .feat-rtsp-row[data-state="connecting"] .feat-rtsp-bar {
+    background: #fbbf24;
+    width: 60%;
+    animation: feat-rtsp-progress 1.2s ease-in-out infinite alternate;
+  }
+  .feat-rtsp-row[data-state="valid"]   .feat-rtsp-bar { background: var(--color-accent); }
+  .feat-rtsp-row[data-state="invalid"] .feat-rtsp-bar { background: #fb7185; width: 100% !important; }
+
+  @keyframes feat-rtsp-progress {
+    from { width: 25%; }
+    to   { width: 75%; }
+  }
+
+  .feat-rtsp-value {
+    color: var(--color-fg-dim);
+  }
+  .feat-rtsp-row[data-state="connecting"] .feat-rtsp-value { color: #fbbf24; }
+  .feat-rtsp-row[data-state="valid"]      .feat-rtsp-value { color: var(--color-accent); }
+  .feat-rtsp-row[data-state="invalid"]    .feat-rtsp-value { color: #fb7185; }
+
+  /* Report bars staggered grow on view */
+  .feat-bar {
+    transform-origin: bottom center;
+    animation: feat-bar 0.7s ease-out backwards;
+    animation-delay: calc(var(--di, 0) * 0.05s);
+    transition: filter 200ms ease;
+  }
+
+  @keyframes feat-bar {
+    from { transform: scaleY(0); }
+    to   { transform: scaleY(1); }
+  }
+
+  /* Subtle breathing on all bars */
+  .feat-bar {
+    transform-box: fill-box;
+  }
+
+  /* Live (last) bar pulses */
+  .feat-bar--live {
+    animation: feat-bar-live 1.8s ease-in-out infinite;
+  }
+  @keyframes feat-bar-live {
+    0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+    50%      { filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.75)); }
+  }
+
+  /* +1 toast over the bars */
+  .feat-toast {
+    position: absolute;
+    bottom: 90px;
+    right: 18px;
+    background: var(--color-accent);
+    color: var(--color-bg);
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px);
+    box-shadow: 0 6px 14px -4px color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+  .feat-toast.feat-toast--show {
+    animation: feat-toast 1.4s ease-out;
+  }
+  @keyframes feat-toast {
+    0%   { opacity: 0; transform: translateY(8px) scale(0.9); }
+    20%  { opacity: 1; transform: translateY(0)   scale(1);   }
+    80%  { opacity: 1; transform: translateY(-2px) scale(1);  }
+    100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+  }
+
+  /* Flash green when stat increments */
+  .feat-stat--flash {
+    animation: feat-stat-flash 0.6s ease-out;
+  }
+  @keyframes feat-stat-flash {
+    0%   { color: #34d399; transform: scale(1);   }
+    30%  { color: #34d399; transform: scale(1.12); }
+    100% { color: inherit; transform: scale(1);   }
+  }
+
+  /* Cycling dashboard panels */
+  .feat-dash {
+    position: relative;
+    min-height: 200px;
+  }
+
+  .feat-dash__panel {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 320ms ease, transform 320ms ease;
+  }
+
+  .feat-dash__panel.feat-dash__panel--active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* Pagination dots */
+  .feat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--color-border-strong);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background 200ms ease, width 250ms ease;
+  }
+  .feat-dot:hover { background: var(--color-fg-muted); }
+  .feat-dot.feat-dot--active {
+    background: var(--color-accent);
+    width: 18px;
+  }
+
+  /* Sparkline draw */
+  .feat-spark {
+    stroke-dasharray: 220;
+    stroke-dashoffset: 220;
+  }
+  .feat-dash__panel--active .feat-spark {
+    animation: feat-spark-draw 1.1s ease-out forwards;
+  }
+  @keyframes feat-spark-draw {
+    to { stroke-dashoffset: 0; }
+  }
+
+  /* Alert rows fade in stagger */
+  .feat-alert {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: feat-alert-in 0.5s ease-out forwards;
+    animation-delay: calc(var(--di, 0) * 0.12s);
+  }
+
+  @keyframes feat-alert-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .feat-cam__noise,
+    .feat-cam__live,
+    .feat-qr,
+    .feat-rtsp-bar,
+    .feat-bar,
+    .feat-alert,
+    .feat-rtsp-spinner,
+    .feat-rtsp-check,
+    .feat-rtsp-cross {
+      animation: none;
+    }
+    .feat-alert { opacity: 1; transform: none; }
+  }
+</style>
+
+<script>
+  type RtspState = 'idle' | 'connecting' | 'valid' | 'invalid';
+  type RtspCfg = { final: RtspState; ms: number; value: string };
+
+  // CAM-03 ends as INVALID (auto-reconnect scenario). Others validate fine.
+  const RTSP_CFG: RtspCfg[] = [
+    { final: 'valid',   ms: 12, value: '12 ms'   },
+    { final: 'valid',   ms: 18, value: '18 ms'   },
+    { final: 'invalid', ms: 0,  value: 'timeout' },
+    { final: 'valid',   ms: 22, value: '22 ms'   },
+  ];
+
+  // Timeline (seconds) per row: connecting start, final settle.
+  // Each row staggers ~1.2s so the visitor can follow the flow.
+  const RTSP_TIMELINE = [
+    { connect: 0.8, settle: 2.2 },
+    { connect: 2.0, settle: 3.4 },
+    { connect: 3.4, settle: 5.0 },
+    { connect: 4.6, settle: 6.0 },
+  ];
+  const CYCLE = 10; // seconds per loop, including idle tail
+
+  const rows = Array.from(document.querySelectorAll<HTMLElement>('#feat-rtsp-list .feat-rtsp-row'));
+  const statusEl = document.getElementById('feat-rtsp-status');
+
+  function setRow(row: HTMLElement, state: RtspState, label: string) {
+    if (row.dataset.state !== state) row.dataset.state = state;
+    const valEl = row.querySelector<HTMLElement>('.feat-rtsp-value');
+    if (valEl && valEl.textContent !== label) valEl.textContent = label;
+  }
+
+  const start = performance.now();
+  function tick() {
+    const t = ((performance.now() - start) / 1000) % CYCLE;
+
+    let validCount = 0;
+    let invalidCount = 0;
+    rows.forEach((row, i) => {
+      const cfg = RTSP_CFG[i];
+      const timing = RTSP_TIMELINE[i];
+      let state: RtspState;
+      let label: string;
+
+      if (t < timing.connect) {
+        state = 'idle';
+        label = '—';
+      } else if (t < timing.settle) {
+        state = 'connecting';
+        label = 'conectando…';
+      } else {
+        state = cfg.final;
+        label = cfg.value;
+      }
+
+      setRow(row, state, label);
+      if (state === 'valid')   validCount++;
+      if (state === 'invalid') invalidCount++;
+    });
+
+    if (statusEl) {
+      const total = rows.length;
+      if (invalidCount > 0) {
+        statusEl.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-[#fb7185] animate-pulse"></span> ${validCount}/${total} · 1 reconectando`;
+        statusEl.style.color = '#fb7185';
+      } else if (validCount === total) {
+        statusEl.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span> OK · ${total}/${total}`;
+        statusEl.style.color = 'var(--color-accent)';
+      } else {
+        statusEl.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-[#fbbf24] animate-pulse"></span> handshake · ${validCount}/${total}`;
+        statusEl.style.color = '#fbbf24';
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  if (rows.length) requestAnimationFrame(tick);
+
+  // ===== Reports & metrics live animation =====
+  const statTotal = document.getElementById('feat-stat-total');
+  const statPeak  = document.getElementById('feat-stat-peak');
+  const statConf  = document.getElementById('feat-stat-conf');
+  const toastEl   = document.getElementById('feat-toast');
+  const liveBar   = document.querySelector<SVGRectElement>('.feat-bar--live');
+
+  function setStatNumber(el: HTMLElement | null, value: number) {
+    if (!el) return;
+    const valEl = el.querySelector<HTMLElement>('.feat-stat__val');
+    if (valEl) valEl.textContent = String(value);
+    else el.textContent = String(value);
+  }
+
+  function animateCountUp(el: HTMLElement | null, target: number, duration = 1100) {
+    if (!el) return;
+    const start = performance.now();
+    function step(now: number) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const v = Math.round(eased * target);
+      setStatNumber(el, v);
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  if (statTotal) animateCountUp(statTotal, Number(statTotal.dataset.target ?? 0));
+  if (statPeak)  animateCountUp(statPeak,  Number(statPeak.dataset.target  ?? 0), 1300);
+  if (statConf)  animateCountUp(statConf,  Number(statConf.dataset.target  ?? 0), 1500);
+
+  // Simulate a new pallet being logged every few seconds.
+  let totalNow = Number(statTotal?.dataset.target ?? 137);
+  let liveBase = liveBar ? Number(liveBar.dataset.base ?? 10) : 10;
+
+  function bumpPallet() {
+    totalNow += 1;
+    liveBase += 1;
+    if (statTotal) {
+      setStatNumber(statTotal, totalNow);
+      statTotal.classList.remove('feat-stat--flash');
+      void statTotal.offsetWidth;
+      statTotal.classList.add('feat-stat--flash');
+    }
+    if (liveBar) {
+      const peakAttr = 18; // visual reference peak
+      const newPct = Math.min(1.05, liveBase / peakAttr);
+      const newH = newPct * 70;
+      const newY = 78 - newH;
+      liveBar.setAttribute('height', String(newH));
+      liveBar.setAttribute('y', String(newY));
+    }
+    if (toastEl) {
+      toastEl.classList.remove('feat-toast--show');
+      void toastEl.offsetWidth;
+      toastEl.classList.add('feat-toast--show');
+    }
+  }
+
+  setInterval(bumpPallet, 5500);
+
+  // Subtle confidence jitter ± 1%.
+  if (statConf) {
+    setInterval(() => {
+      const base = Number(statConf.dataset.target ?? 92);
+      const jitter = Math.round((Math.random() - 0.5) * 2);
+      setStatNumber(statConf, Math.max(0, Math.min(99, base + jitter)));
+    }, 1800);
+  }
+
+  // ===== Dashboard panel cycling =====
+  const panels = Array.from(document.querySelectorAll<HTMLElement>('.feat-dash__panel'));
+  const dots   = Array.from(document.querySelectorAll<HTMLButtonElement>('.feat-dot'));
+  const PANEL_INTERVAL_MS = 6500;
+  let panelIdx = 0;
+  let panelTimer: number | null = null;
+
+  const donutArc   = document.getElementById('feat-donut-arc') as SVGCircleElement | null;
+  const donutPct   = document.getElementById('feat-donut-pct');
+  const donutCount = document.getElementById('feat-donut-count');
+  let donutCurrent = 137;
+  const DONUT_GOAL = 160;
+  const DONUT_CIRC = 264; // 2 * PI * r (r=42)
+
+  function showPanel(idx: number, animateDonut = true) {
+    panelIdx = idx;
+    panels.forEach((p, i) => p.classList.toggle('feat-dash__panel--active', i === idx));
+    dots.forEach((d, i) => d.classList.toggle('feat-dot--active', i === idx));
+
+    if (idx === 1 && donutArc && donutPct && donutCount && animateDonut) {
+      // animate donut to current value
+      const targetPct = donutCurrent / DONUT_GOAL;
+      const start = performance.now();
+      const duration = 900;
+      function step(now: number) {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const pct = targetPct * eased;
+        if (donutArc) donutArc.setAttribute('stroke-dashoffset', String(DONUT_CIRC * (1 - pct)));
+        if (donutPct)   donutPct.textContent   = `${Math.round(pct * 100)}%`;
+        if (donutCount) donutCount.textContent = String(Math.round(donutCurrent * eased));
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+  }
+
+  function nextPanel() {
+    showPanel((panelIdx + 1) % panels.length);
+  }
+
+  function startCycle() {
+    if (panelTimer !== null) return;
+    panelTimer = window.setInterval(nextPanel, PANEL_INTERVAL_MS);
+  }
+  function stopCycle() {
+    if (panelTimer !== null) {
+      clearInterval(panelTimer);
+      panelTimer = null;
+    }
+  }
+
+  dots.forEach((d) => {
+    d.addEventListener('click', () => {
+      const idx = Number(d.dataset.go ?? 0);
+      stopCycle();
+      showPanel(idx);
+      // Restart cycle after manual click.
+      setTimeout(startCycle, PANEL_INTERVAL_MS);
+    });
+  });
+
+  // Init: show first panel, start cycling.
+  showPanel(0, false);
+  startCycle();
+
+  // Keep donut count in sync with pallet bumps.
+  const origBumpTotal = totalNow;
+  setInterval(() => {
+    donutCurrent = Math.min(DONUT_GOAL, donutCurrent + 1);
+    if (panelIdx === 1) showPanel(1, false);
+  }, 5500);
+
+  // ===== QR scenarios — virtual-click demo =====
+  type QrScn = { folio: string; sacks: number; cam: string; ts: string; shift: string };
+  const qrScenarios: QrScn[] = [
+    { folio: 'P-1042', sacks: 5, cam: '01', ts: '2026-01-23 13:42', shift: 'matutino' },
+    { folio: 'P-1043', sacks: 7, cam: '02', ts: '2026-01-23 14:18', shift: 'vespertino' },
+    { folio: 'P-1044', sacks: 3, cam: '04', ts: '2026-01-23 14:51', shift: 'vespertino' },
+  ];
+
+  const qrCard      = document.getElementById('feat-qr-card');
+  const qrIdxEl     = document.getElementById('feat-qr-scn-idx');
+  const qrPatterns2 = Array.from(document.querySelectorAll<HTMLElement>('.feat-qr-pattern'));
+  const qrCursor    = document.getElementById('feat-qr-cursor');
+  const qrRipple    = document.getElementById('feat-qr-ripple');
+  const qrPop       = document.getElementById('feat-qr-card-pop');
+  const popFolio    = document.getElementById('feat-qr-pop-folio');
+  const popSacks    = document.getElementById('feat-qr-pop-sacks');
+  const popCam      = document.getElementById('feat-qr-pop-cam');
+  const popTs       = document.getElementById('feat-qr-pop-ts');
+  const popShift    = document.getElementById('feat-qr-pop-shift');
+
+  let qrScnIdx = 0;
+  let qrTimers: number[] = [];
+
+  function clearQrTimers() {
+    qrTimers.forEach((t) => clearTimeout(t));
+    qrTimers = [];
+  }
+
+  function setQrCardState(s: string) {
+    if (qrCard) qrCard.dataset.state = s;
+  }
+
+  function runQrScenario(idx: number) {
+    clearQrTimers();
+    const scn = qrScenarios[idx];
+
+    qrPatterns2.forEach((p, i) => p.classList.toggle('feat-qr-pattern--active', i === idx));
+    if (qrIdxEl) qrIdxEl.textContent = `${idx + 1}/${qrScenarios.length}`;
+
+    if (popFolio) popFolio.textContent = scn.folio;
+    if (popSacks) popSacks.textContent = `${scn.sacks}/${scn.sacks} ✓`;
+    if (popCam)   popCam.textContent   = scn.cam;
+    if (popTs)    popTs.textContent    = scn.ts;
+    if (popShift) popShift.textContent = scn.shift;
+
+    // Reset visuals
+    qrCursor?.classList.remove('feat-qr-cursor--visible', 'feat-qr-cursor--at-qr', 'feat-qr-cursor--press', 'feat-qr-cursor--exit');
+    qrPop?.classList.remove('feat-qr-card-pop--visible');
+    qrRipple?.classList.remove('feat-qr-ripple--burst');
+    setQrCardState('idle');
+
+    // Sequence:
+    // 0.7s   → cursor appears bottom-right
+    // 1.0s   → cursor glides to QR center (animation 1.1s)
+    // 2.2s   → cursor presses (scale 0.85)
+    // 2.3s   → ripple burst + pop card slides up
+    // 2.4s   → cursor releases (scale back)
+    // 6.5s   → pop card fades, cursor moves out
+    // 7.6s   → next scenario
+
+    qrTimers.push(window.setTimeout(() => {
+      qrCursor?.classList.add('feat-qr-cursor--visible');
+    }, 700));
+
+    qrTimers.push(window.setTimeout(() => {
+      qrCursor?.classList.add('feat-qr-cursor--at-qr');
+    }, 1000));
+
+    qrTimers.push(window.setTimeout(() => {
+      qrCursor?.classList.add('feat-qr-cursor--press');
+      setQrCardState('press');
+    }, 2200));
+
+    qrTimers.push(window.setTimeout(() => {
+      // Ripple
+      qrRipple?.classList.remove('feat-qr-ripple--burst');
+      void qrRipple?.offsetWidth;
+      qrRipple?.classList.add('feat-qr-ripple--burst');
+      // Pop card
+      qrPop?.classList.add('feat-qr-card-pop--visible');
+      setQrCardState('info');
+    }, 2300));
+
+    qrTimers.push(window.setTimeout(() => {
+      qrCursor?.classList.remove('feat-qr-cursor--press');
+    }, 2450));
+
+    qrTimers.push(window.setTimeout(() => {
+      qrPop?.classList.remove('feat-qr-card-pop--visible');
+      qrCursor?.classList.remove('feat-qr-cursor--at-qr');
+      qrCursor?.classList.add('feat-qr-cursor--exit');
+      setQrCardState('done');
+    }, 6500));
+
+    qrTimers.push(window.setTimeout(() => {
+      qrScnIdx = (qrScnIdx + 1) % qrScenarios.length;
+      runQrScenario(qrScnIdx);
+    }, 7600));
+  }
+
+  if (qrCard) runQrScenario(0);
+</script>

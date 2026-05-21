@@ -1,0 +1,290 @@
+---
+import { tech } from '../data/tech';
+
+interface Props {
+  id: keyof typeof tech;
+  caption?: string;
+  reason?: string;
+}
+
+const { id, caption, reason } = Astro.props;
+const t = tech[id];
+
+if (!t) {
+  throw new Error(`Tech card "${id}" not found in registry`);
+}
+
+// Unique dialog id per render (avoid collisions when same tech appears twice).
+const uid = Math.random().toString(36).slice(2, 8);
+const dialogId = `tech-dialog-${id}-${uid}`;
+
+const isClickable = !!reason;
+const Tag = isClickable ? 'button' : 'div';
+---
+
+<Tag
+  type={isClickable ? 'button' : undefined}
+  data-target={isClickable ? dialogId : undefined}
+  aria-haspopup={isClickable ? 'dialog' : undefined}
+  class={`tech-card card p-5 flex flex-col items-center justify-center text-center ${isClickable ? 'tech-card--clickable' : ''}`}
+>
+  <div
+    class="tech-card__logo w-14 h-14 rounded-xl flex items-center justify-center mb-3 relative overflow-hidden"
+    style={`--brand: ${t.color}; background-color: ${t.color}; box-shadow: 0 6px 20px -8px ${t.color}80`}
+  >
+    <span class="tech-card__shine" aria-hidden="true"></span>
+    {t.slug ? (
+      <img
+        src={`https://cdn.simpleicons.org/${t.slug}`}
+        alt={t.name}
+        width="28"
+        height="28"
+        loading="lazy"
+        decoding="async"
+        style="filter: brightness(0) invert(1)"
+        class="relative z-10"
+      />
+    ) : (
+      <span class="text-white font-mono font-bold text-xl relative z-10">{t.initial}</span>
+    )}
+  </div>
+  <p class="text-sm font-semibold leading-tight">{t.name}</p>
+  {caption && <p class="text-xs text-[color:var(--color-fg-dim)] mt-1 font-mono">{caption}</p>}
+  {isClickable && (
+    <span class="tech-card__hint mt-2 font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)]">
+      <span class="inline-flex items-center gap-1">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        ¿por qué?
+      </span>
+    </span>
+  )}
+</Tag>
+
+{isClickable && (
+  <dialog id={dialogId} class="tech-dialog" aria-labelledby={`${dialogId}-title`}>
+    <form method="dialog" class="tech-dialog__inner">
+      <button
+        class="tech-dialog__close"
+        aria-label="Cerrar"
+        value="close"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <p class="font-mono text-[10px] uppercase tracking-widest text-[color:var(--color-accent)] mb-5 text-center">// ¿por qué esta tecnología?</p>
+
+      <div
+        class="tech-dialog__logo mx-auto mb-5 w-24 h-24 md:w-28 md:h-28 rounded-2xl flex items-center justify-center relative overflow-hidden"
+        style={`background-color: ${t.color}; box-shadow: 0 18px 40px -16px ${t.color}80, 0 0 0 1px ${t.color}33`}
+      >
+        <span class="tech-dialog__shine" aria-hidden="true"></span>
+        {t.slug ? (
+          <img
+            src={`https://cdn.simpleicons.org/${t.slug}`}
+            alt=""
+            width="56"
+            height="56"
+            loading="lazy"
+            decoding="async"
+            style="filter: brightness(0) invert(1)"
+            class="relative z-10"
+          />
+        ) : (
+          <span class="text-white font-mono font-bold text-4xl relative z-10">{t.initial}</span>
+        )}
+      </div>
+
+      <h3 class="text-2xl md:text-3xl font-semibold leading-tight text-center mb-1" id={`${dialogId}-title`}>{t.name}</h3>
+      {caption && <p class="text-xs text-[color:var(--color-fg-dim)] mt-0 mb-5 text-center font-mono uppercase tracking-widest">{caption}</p>}
+
+      <p class="text-sm md:text-base text-[color:var(--color-fg-muted)] leading-relaxed text-balance text-center">{reason}</p>
+    </form>
+  </dialog>
+)}
+
+<style>
+  .tech-card {
+    transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+    animation: tech-float-a 5s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .tech-card--clickable {
+    cursor: pointer;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    font: inherit;
+    color: inherit;
+    text-align: center;
+    font-family: inherit;
+  }
+
+  .tech-card:nth-child(2n)  { animation: tech-float-b 6.2s ease-in-out infinite;  animation-delay: -0.6s; }
+  .tech-card:nth-child(3n)  { animation: tech-float-c 5.6s ease-in-out infinite;  animation-delay: -1.2s; }
+  .tech-card:nth-child(4n)  { animation: tech-float-a 6.8s ease-in-out infinite;  animation-delay: -1.8s; }
+  .tech-card:nth-child(5n)  { animation: tech-float-b 5.3s ease-in-out infinite;  animation-delay: -2.4s; }
+  .tech-card:nth-child(7n)  { animation: tech-float-c 6.0s ease-in-out infinite;  animation-delay: -0.3s; }
+
+  @keyframes tech-float-a {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-5px) rotate(-0.4deg); }
+  }
+  @keyframes tech-float-b {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-6px) rotate(0.4deg); }
+  }
+  @keyframes tech-float-c {
+    0%, 100% { transform: translateY(-2px) rotate(0deg); }
+    50%      { transform: translateY(4px) rotate(0.2deg); }
+  }
+
+  .tech-card:hover {
+    transform: translateY(-6px) scale(1.04);
+    border-color: var(--color-accent);
+    box-shadow: 0 18px 40px -18px var(--color-accent-glow), 0 0 0 1px var(--color-accent-glow);
+    animation-play-state: paused;
+  }
+
+  .tech-card__logo {
+    transition: transform 250ms ease;
+  }
+
+  .tech-card:hover .tech-card__logo {
+    transform: scale(1.08) rotate(-3deg);
+  }
+
+  .tech-card__shine {
+    position: absolute;
+    inset: -150% -50%;
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 65%
+    );
+    transform: translateX(-100%);
+    animation: tech-shine 5.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .tech-card:nth-child(2n) .tech-card__shine { animation-delay: -1.5s; animation-duration: 6.5s; }
+  .tech-card:nth-child(3n) .tech-card__shine { animation-delay: -2.5s; animation-duration: 5.8s; }
+  .tech-card:nth-child(4n) .tech-card__shine { animation-delay: -3.2s; animation-duration: 6.2s; }
+  .tech-card:nth-child(5n) .tech-card__shine { animation-delay: -0.8s; animation-duration: 5.2s; }
+
+  @keyframes tech-shine {
+    0%        { transform: translateX(-100%); }
+    35%, 100% { transform: translateX(150%); }
+  }
+
+  /* Native dialog styling — proper centered card */
+  .tech-dialog {
+    margin: auto;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 18px;
+    background: var(--color-bg-soft);
+    color: var(--color-fg);
+    padding: 0;
+    width: min(440px, 92vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow:
+      0 0 0 1px var(--color-accent-glow),
+      0 30px 60px -20px rgba(0, 0, 0, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .tech-dialog::backdrop {
+    background: rgba(10, 14, 20, 0.72);
+    backdrop-filter: blur(6px);
+  }
+
+  .tech-dialog[open] {
+    animation: tech-dialog-pop 160ms cubic-bezier(0.2, 0.8, 0.4, 1);
+  }
+
+  .tech-dialog[open]::backdrop {
+    animation: tech-dialog-fade 140ms ease-out;
+  }
+
+  @keyframes tech-dialog-pop {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1);    }
+  }
+
+  @keyframes tech-dialog-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .tech-dialog__inner {
+    position: relative;
+    padding: 2.5rem 1.75rem 1.75rem;
+  }
+
+  .tech-dialog__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--color-bg-elev);
+    border: 1px solid var(--color-border);
+    color: var(--color-fg-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+  }
+
+  .tech-dialog__close:hover {
+    color: var(--color-fg);
+    border-color: var(--color-accent);
+  }
+
+  .tech-dialog__logo {
+    animation: tech-dialog-logo-in 260ms cubic-bezier(0.3, 1.3, 0.5, 1) both;
+    animation-delay: 40ms;
+  }
+
+  .tech-dialog__shine {
+    position: absolute;
+    inset: -150% -50%;
+    background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.35) 50%, transparent 65%);
+    transform: translateX(-100%);
+    animation: tech-dialog-shine 900ms ease-in-out 180ms 1;
+    pointer-events: none;
+  }
+
+  @keyframes tech-dialog-logo-in {
+    from { opacity: 0; transform: scale(0.65) rotate(-6deg); }
+    to   { opacity: 1; transform: scale(1)    rotate(0deg);  }
+  }
+
+  @keyframes tech-dialog-shine {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(150%);  }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tech-card,
+    .tech-card__shine,
+    .tech-dialog[open] {
+      animation: none;
+    }
+    .tech-card:hover { transform: none; }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-target]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.target;
+      if (!id) return;
+      const dlg = document.getElementById(id) as HTMLDialogElement | null;
+      dlg?.showModal();
+    });
+  });
+</script>

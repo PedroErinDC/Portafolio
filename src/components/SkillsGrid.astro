@@ -1,33 +1,24 @@
 ---
+import TechBadge from './TechBadge.astro';
 import { useTranslations } from '../i18n/utils';
+import { categoryLabel, tech, type Tech } from '../data/tech';
 import type { Lang } from '../i18n/ui';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 
-const groups = [
-  {
-    titleKey: 'skills.ai' as const,
-    items: ['YOLO 11/26', 'PyTorch', 'TensorRT', 'CUDA', 'Faster-Whisper', 'BGE-M3', 'CVAT', 'Jetson Nano', 'NVIDIA Omniverse'],
-  },
-  {
-    titleKey: 'skills.frameworks' as const,
-    items: ['React 19', 'Next.js', 'Astro', 'Spring Boot 3', 'FastAPI', 'Node.js', 'tRPC', 'Drizzle ORM'],
-  },
-  {
-    titleKey: 'skills.langs' as const,
-    items: ['Python', 'JavaScript', 'TypeScript', 'Java', 'C#', 'Kotlin'],
-  },
-  {
-    titleKey: 'skills.infra' as const,
-    items: ['Docker', 'Redis', 'Milvus', 'PostgreSQL', 'MySQL', 'n8n', 'FFmpeg'],
-  },
-  {
-    titleKey: 'skills.tools' as const,
-    items: ['Claude Sonnet/Opus', 'Claude Code', 'Codex', 'Qwen2.5', 'Google Stitch', 'HuggingFace'],
-  },
-];
+type Category = Tech['category'];
+const order: Category[] = ['ai', 'frameworks', 'langs', 'infra', 'tools'];
+
+const grouped: Record<Category, (keyof typeof tech)[]> = {
+  ai: ['yolo', 'rfdetr', 'pytorch', 'cuda', 'tensorrt', 'jetson', 'whisper', 'bgem3', 'cvat', 'omniverse', 'qwen'],
+  frameworks: ['react', 'nextjs', 'astro', 'springboot', 'fastapi', 'nodejs', 'trpc', 'drizzle', 'tailwind'],
+  langs: ['python', 'javascript', 'typescript', 'java', 'csharp', 'kotlin'],
+  infra: ['docker', 'redis', 'postgresql', 'mysql', 'milvus', 'ffmpeg', 'n8n'],
+  tools: ['claude', 'claudecode', 'codex', 'huggingface'],
+  engine: [],
+};
 ---
 
 <section id="skills" class="section">
@@ -35,19 +26,129 @@ const groups = [
     <p class="section-kicker">{t('skills.kicker')}</p>
     <h2 class="section-title">{t('skills.title')}</h2>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10">
-      {groups.map((g) => (
-        <div class="card p-5">
-          <h3 class="text-sm font-mono text-[color:var(--color-accent)] mb-3">
-            {t(g.titleKey)}
+    <div class="grid lg:grid-cols-2 gap-4 mt-10">
+      {order.map((cat, ci) => (
+        <div class="skills-card card p-6 relative overflow-hidden" style={`--si: ${ci}`}>
+          <span class="skills-card__orbit" aria-hidden="true"></span>
+          <span class="skills-card__shine" aria-hidden="true"></span>
+
+          <h3 class="relative font-mono text-xs uppercase tracking-widest text-[color:var(--color-accent)] mb-4 flex items-center gap-2">
+            <span class="skills-card__dot"></span>
+            // {categoryLabel[lang][cat]}
           </h3>
-          <div class="flex flex-wrap gap-1.5">
-            {g.items.map((it) => (
-              <span class="badge">{it}</span>
-            ))}
+
+          <div class="skills-card__badges relative flex flex-wrap gap-2">
+            {grouped[cat].map((id) => <TechBadge id={id} size="md" />)}
           </div>
         </div>
       ))}
     </div>
   </div>
 </section>
+
+<style>
+  .skills-card {
+    isolation: isolate;
+    transition: border-color 300ms ease, transform 300ms ease;
+  }
+
+  .skills-card:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+    transform: translateY(-2px);
+  }
+
+  /* Soft conic orbit glow behind content */
+  .skills-card__orbit {
+    position: absolute;
+    inset: -40%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      color-mix(in srgb, var(--color-accent) 28%, transparent) 30deg,
+      transparent 70deg,
+      transparent 360deg
+    );
+    filter: blur(28px);
+    opacity: 0.55;
+    z-index: 0;
+    pointer-events: none;
+    animation: skills-orbit 16s linear infinite;
+  }
+
+  .skills-card:nth-of-type(2n) .skills-card__orbit { animation-duration: 19s; animation-direction: reverse; }
+  .skills-card:nth-of-type(3n) .skills-card__orbit { animation-duration: 22s; }
+
+  @keyframes skills-orbit {
+    to { transform: rotate(1turn); }
+  }
+
+  /* Diagonal shine sweep, occasional */
+  .skills-card__shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      color-mix(in srgb, var(--color-accent) 10%, transparent) 50%,
+      transparent 65%
+    );
+    transform: translateX(-120%);
+    pointer-events: none;
+    animation: skills-shine 8s ease-in-out infinite;
+    animation-delay: calc(var(--si, 0) * 1.4s);
+  }
+
+  @keyframes skills-shine {
+    0%, 100% { transform: translateX(-120%); }
+    50%      { transform: translateX(120%);  }
+  }
+
+  /* Pulsing dot next to category title */
+  .skills-card__dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--color-accent);
+    box-shadow: 0 0 8px var(--color-accent), 0 0 16px color-mix(in srgb, var(--color-accent) 60%, transparent);
+    animation: skills-dot 2.4s ease-in-out infinite;
+  }
+
+  @keyframes skills-dot {
+    0%, 100% { transform: scale(1);    opacity: 1;   }
+    50%      { transform: scale(1.35); opacity: 0.65; }
+  }
+
+  /* Float each badge with stagger, no color noise */
+  .skills-card__badges > * {
+    animation: skills-float 5s ease-in-out infinite;
+    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+    will-change: transform;
+  }
+
+  .skills-card__badges > *:nth-child(2n) { animation-duration: 6.2s; animation-delay: -0.7s; }
+  .skills-card__badges > *:nth-child(3n) { animation-duration: 5.6s; animation-delay: -1.4s; }
+  .skills-card__badges > *:nth-child(4n) { animation-duration: 6.6s; animation-delay: -2.1s; }
+  .skills-card__badges > *:nth-child(5n) { animation-duration: 5.3s; animation-delay: -2.8s; }
+  .skills-card__badges > *:nth-child(7n) { animation-duration: 5.9s; animation-delay: -0.4s; }
+
+  @keyframes skills-float {
+    0%, 100% { transform: translateY(0);    }
+    50%      { transform: translateY(-3px); }
+  }
+
+  .skills-card__badges > *:hover {
+    transform: translateY(-3px) scale(1.04);
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 8px 22px -12px color-mix(in srgb, var(--color-accent) 55%, transparent);
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skills-card__orbit,
+    .skills-card__shine,
+    .skills-card__dot,
+    .skills-card__badges > * {
+      animation: none;
+    }
+  }
+</style>

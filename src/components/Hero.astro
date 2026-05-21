@@ -12,7 +12,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <section class="relative overflow-hidden">
   <div class="absolute inset-0 grid-noise opacity-40 pointer-events-none"></div>
 
-  <div class="container-page relative pt-20 md:pt-28 pb-16 md:pb-24">
+  <div class="container-page relative pt-14 md:pt-20 pb-10 md:pb-14">
     <div class="flex items-center gap-2 mb-6">
       <span class="inline-block w-2 h-2 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
       <span class="font-mono text-xs uppercase tracking-widest text-[color:var(--color-fg-muted)]">{t('hero.status')}</span>
@@ -34,7 +34,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     </p>
 
     <div class="flex flex-wrap gap-3">
-      <a href={base + (isES ? '/trabajo' : '/en/work')} class="btn btn-primary">
+      <a href={base + (isES ? '/proyectos' : '/en/projects')} class="btn btn-primary">
         {t('hero.cta.work')}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
@@ -43,7 +43,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       </a>
     </div>
 
-    <div class="mt-14 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-mono text-[color:var(--color-fg-dim)]">
+    <div class="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-mono text-[color:var(--color-fg-dim)]">
       <span class="inline-flex items-center gap-2">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         {t('hero.location')}

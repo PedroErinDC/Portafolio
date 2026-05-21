@@ -17,42 +17,154 @@ const isES = lang === 'es';
       </div>
       <span class="badge badge-accent">
         <span class="w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)] animate-pulse"></span>
-        {isES ? 'BÚSQUEDA SEMÁNTICA' : 'SEMANTIC SEARCH'}
+        {isES ? 'DEMOSTRACIÓN AUTOMÁTICA' : 'AUTOMATED DEMO'}
       </span>
     </div>
     <p class="text-sm text-[color:var(--color-fg-muted)] mt-2 max-w-2xl">{t('publicvector.demoDesc')}</p>
   </div>
 
-  <div class="p-5 md:p-6 space-y-4">
-    <div class="relative">
-      <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--color-fg-dim)]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input
-        id="pv-search"
-        type="text"
-        placeholder={isES ? 'Buscar menciones... (ej: presidente, economía, deportes)' : 'Search mentions... (e.g., president, economy, sports)'}
-        class="w-full pl-12 pr-4 py-3 bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)] rounded-xl text-sm focus:outline-none focus:border-[color:var(--color-accent)] transition-colors font-mono"
-      />
+  <div class="grid lg:grid-cols-[1fr_1fr] gap-0">
+
+    <!-- LEFT: Live transcription feed -->
+    <div class="p-5 md:p-6 border-b lg:border-b-0 lg:border-r border-[color:var(--color-border)]">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <p class="font-mono text-xs uppercase tracking-widest text-[color:var(--color-accent)]">// {isES ? 'ingesta en vivo' : 'live ingest'}</p>
+        <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)]">FFmpeg · Whisper large-v3</p>
+      </div>
+
+      <div class="space-y-2 mb-4" id="pv-channels"></div>
+
+      <div class="rounded-lg bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)] p-3 min-h-[180px]">
+        <div class="flex items-center justify-between mb-2">
+          <span id="pv-current-channel" class="font-mono text-[10px] text-[color:var(--color-accent)]">— : —</span>
+          <span class="font-mono text-[10px] text-[color:var(--color-fg-dim)] inline-flex items-center gap-1.5">
+            <span class="inline-block w-1 h-1 rounded-full bg-[color:var(--color-rose)] animate-pulse"></span>
+            REC
+          </span>
+        </div>
+        <p id="pv-transcript" class="text-sm leading-relaxed text-[color:var(--color-fg)] font-mono"></p>
+        <span id="pv-cursor" class="inline-block w-1.5 h-3 bg-[color:var(--color-accent)] ml-0.5 animate-pulse align-middle"></span>
+      </div>
+
+      <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)] mt-3 text-center" id="pv-ingest-status">
+        {isES ? 'transcribiendo audio…' : 'transcribing audio…'}
+      </p>
     </div>
 
-    <div class="flex flex-wrap gap-2">
-      <button class="badge pv-suggest hover:badge-accent" data-q="presidente">presidente</button>
-      <button class="badge pv-suggest hover:badge-accent" data-q="economía">economía</button>
-      <button class="badge pv-suggest hover:badge-accent" data-q="deportes">deportes</button>
-      <button class="badge pv-suggest hover:badge-accent" data-q="seguridad">seguridad</button>
-      <button class="badge pv-suggest hover:badge-accent" data-q="elecciones">elecciones</button>
+    <!-- RIGHT: Auto query + pipeline + results -->
+    <div class="p-5 md:p-6">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <p class="font-mono text-xs uppercase tracking-widest text-[color:var(--color-accent)]">// {isES ? 'búsqueda semántica' : 'semantic search'}</p>
+        <p class="font-mono text-[10px] text-[color:var(--color-fg-dim)]">BGE-M3 · Milvus · Qwen2.5</p>
+      </div>
+
+      <!-- Faux search input with auto-typing query -->
+      <div class="relative mb-4">
+        <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--color-fg-dim)]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="w-full pl-12 pr-4 py-3 bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)] rounded-xl text-sm font-mono min-h-[44px] flex items-center">
+          <span id="pv-query-text"></span><span class="inline-block w-1 h-3.5 bg-[color:var(--color-accent)] ml-0.5 align-middle pv-blink"></span>
+        </div>
+      </div>
+
+      <!-- Pipeline steps (light up sequentially) -->
+      <div class="space-y-1.5 mb-4" id="pv-pipeline">
+        <div class="pv-step flex items-center gap-2 text-xs font-mono" data-step="0">
+          <span class="pv-step__icon w-4 h-4 inline-flex items-center justify-center"></span>
+          <span class="text-[color:var(--color-fg-muted)] flex-1">BGE-M3 · {isES ? 'embedding consulta' : 'query embedding'}</span>
+          <span class="pv-step__val text-[color:var(--color-fg-dim)]">—</span>
+        </div>
+        <div class="pv-step flex items-center gap-2 text-xs font-mono" data-step="1">
+          <span class="pv-step__icon w-4 h-4 inline-flex items-center justify-center"></span>
+          <span class="text-[color:var(--color-fg-muted)] flex-1">Milvus · {isES ? 'vector search (cosine)' : 'vector search (cosine)'}</span>
+          <span class="pv-step__val text-[color:var(--color-fg-dim)]">—</span>
+        </div>
+        <div class="pv-step flex items-center gap-2 text-xs font-mono" data-step="2">
+          <span class="pv-step__icon w-4 h-4 inline-flex items-center justify-center"></span>
+          <span class="text-[color:var(--color-fg-muted)] flex-1">Qwen2.5 · {isES ? 'extracción de contexto + sentimiento' : 'context + sentiment extraction'}</span>
+          <span class="pv-step__val text-[color:var(--color-fg-dim)]">—</span>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="pv-results" class="space-y-2 min-h-[200px] max-h-[300px] overflow-y-auto pr-1"></div>
     </div>
 
-    <div class="flex items-center justify-between text-xs font-mono text-[color:var(--color-fg-dim)] pt-2">
-      <span id="pv-stats">{isES ? 'Mostrando' : 'Showing'}: 0</span>
-      <span class="inline-flex items-center gap-1.5">
-        <span class="inline-block w-1.5 h-1.5 rounded-full bg-[color:var(--color-accent)]"></span>
-        BGE-M3 · Milvus · Qwen2.5
-      </span>
-    </div>
-
-    <div id="pv-results" class="space-y-3 max-h-[480px] overflow-y-auto pr-1"></div>
   </div>
 </div>
+
+<style>
+  /* Cursor blink */
+  .pv-blink {
+    animation: pv-blink 1s steps(2) infinite;
+  }
+  @keyframes pv-blink {
+    50% { opacity: 0; }
+  }
+
+  /* Pipeline step icons */
+  .pv-step__icon {
+    border-radius: 999px;
+    background: var(--color-border);
+    transition: background 250ms ease, box-shadow 250ms ease;
+    position: relative;
+  }
+  .pv-step[data-state="active"] .pv-step__icon {
+    background: #fbbf24;
+    box-shadow: 0 0 8px #fbbf24;
+    animation: pv-step-pulse 1s ease-in-out infinite;
+  }
+  .pv-step[data-state="done"] .pv-step__icon {
+    background: var(--color-accent);
+    box-shadow: 0 0 6px var(--color-accent);
+  }
+  .pv-step[data-state="done"] .pv-step__icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230a0e14' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+    background-size: 70% 70%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .pv-step[data-state="active"] .pv-step__val,
+  .pv-step[data-state="done"]   .pv-step__val { color: var(--color-fg); }
+  .pv-step[data-state="done"]   .pv-step__val { color: var(--color-accent); }
+
+  @keyframes pv-step-pulse {
+    0%, 100% { transform: scale(1);   }
+    50%      { transform: scale(1.25); }
+  }
+
+  /* Channel pill row */
+  .pv-channel {
+    transition: opacity 250ms ease, background 250ms ease, border-color 250ms ease;
+    opacity: 0.45;
+  }
+  .pv-channel--active {
+    opacity: 1;
+    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-elev));
+    border-color: var(--color-accent);
+  }
+
+  /* Result cards fade-in */
+  .pv-result {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: pv-result-in 360ms ease-out forwards;
+  }
+  @keyframes pv-result-in {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pv-blink,
+    .pv-step[data-state="active"] .pv-step__icon,
+    .pv-result {
+      animation: none;
+    }
+    .pv-result { opacity: 1; transform: none; }
+  }
+</style>
 
 <script>
   type Mention = {
@@ -67,103 +179,203 @@ const isES = lang === 'es';
     score: number;
   };
 
-  const mentions: Mention[] = [
-    { id: 'M-9821', channel: 'Canal 11', type: 'TV', date: '2026-05-12', time: '19:32', keyword: 'presidente', snippet: 'El presidente anunció hoy la nueva política económica que entrará en vigor el próximo mes...', sentiment: 'neutral', score: 0.94 },
-    { id: 'M-9822', channel: 'Radio Centro', type: 'Radio', date: '2026-05-12', time: '08:15', keyword: 'economía', snippet: 'La economía mexicana muestra señales de recuperación según el último informe del Banco de México.', sentiment: 'positivo', score: 0.91 },
-    { id: 'M-9823', channel: 'TV Azteca', type: 'TV', date: '2026-05-11', time: '21:05', keyword: 'deportes', snippet: 'En deportes, el equipo nacional consigue una victoria contundente frente a su rival.', sentiment: 'positivo', score: 0.88 },
-    { id: 'M-9824', channel: 'Imagen Radio', type: 'Radio', date: '2026-05-11', time: '14:48', keyword: 'seguridad', snippet: 'Aumenta la preocupación por la seguridad pública en varias entidades del país.', sentiment: 'negativo', score: 0.86 },
-    { id: 'M-9825', channel: 'Foro TV', type: 'TV', date: '2026-05-10', time: '22:18', keyword: 'elecciones', snippet: 'Las próximas elecciones intermedias marcarán el rumbo del próximo trienio legislativo.', sentiment: 'neutral', score: 0.92 },
-    { id: 'M-9826', channel: 'Canal 11', type: 'TV', date: '2026-05-10', time: '13:42', keyword: 'presidente', snippet: 'El presidente sostuvo una reunión bilateral con su contraparte canadiense esta mañana.', sentiment: 'neutral', score: 0.89 },
-    { id: 'M-9827', channel: 'W Radio', type: 'Radio', date: '2026-05-09', time: '07:20', keyword: 'economía', snippet: 'Analistas advierten sobre la volatilidad económica frente al cierre del trimestre.', sentiment: 'negativo', score: 0.83 },
-    { id: 'M-9828', channel: 'ESPN', type: 'TV', date: '2026-05-09', time: '20:00', keyword: 'deportes', snippet: 'Final cardiaca en deportes con goleada inesperada en el último minuto.', sentiment: 'positivo', score: 0.95 },
-    { id: 'M-9829', channel: 'Radio Fórmula', type: 'Radio', date: '2026-05-08', time: '16:55', keyword: 'seguridad', snippet: 'Reportes de seguridad indican un descenso del 12% en delitos de alto impacto.', sentiment: 'positivo', score: 0.81 },
-    { id: 'M-9830', channel: 'Foro TV', type: 'TV', date: '2026-05-08', time: '09:10', keyword: 'elecciones', snippet: 'Encuestas previas a las elecciones reflejan empate técnico entre los dos contendientes principales.', sentiment: 'neutral', score: 0.87 },
+  const channels = [
+    { id: 'c1', name: 'Canal 11',      type: 'TV'    },
+    { id: 'c2', name: 'Radio Centro',  type: 'Radio' },
+    { id: 'c3', name: 'TV Azteca',     type: 'TV'    },
+    { id: 'c4', name: 'W Radio',       type: 'Radio' },
   ];
 
-  const synonyms: Record<string, string[]> = {
-    presidente: ['mandatario', 'gobierno', 'ejecutivo'],
-    economía: ['mercado', 'inflación', 'PIB', 'financiero', 'banco'],
-    deportes: ['fútbol', 'equipo', 'victoria', 'partido', 'gol'],
-    seguridad: ['delito', 'crimen', 'pública', 'protección'],
-    elecciones: ['voto', 'comicios', 'candidato', 'encuestas'],
-  };
+  const mentions: Mention[] = [
+    { id: 'M-9821', channel: 'Canal 11',     type: 'TV',    date: '2026-05-12', time: '19:32', keyword: 'presidente', snippet: 'El presidente anunció hoy la nueva política económica que entrará en vigor el próximo mes.',                 sentiment: 'neutral',  score: 0.94 },
+    { id: 'M-9826', channel: 'Canal 11',     type: 'TV',    date: '2026-05-10', time: '13:42', keyword: 'presidente', snippet: 'El presidente sostuvo una reunión bilateral con su contraparte canadiense esta mañana.',                  sentiment: 'neutral',  score: 0.89 },
+    { id: 'M-9822', channel: 'Radio Centro', type: 'Radio', date: '2026-05-12', time: '08:15', keyword: 'economía',   snippet: 'La economía mexicana muestra señales de recuperación según el último informe del Banco de México.',         sentiment: 'positivo', score: 0.91 },
+    { id: 'M-9827', channel: 'W Radio',      type: 'Radio', date: '2026-05-09', time: '07:20', keyword: 'economía',   snippet: 'Analistas advierten sobre la volatilidad económica frente al cierre del trimestre.',                       sentiment: 'negativo', score: 0.83 },
+    { id: 'M-9823', channel: 'TV Azteca',    type: 'TV',    date: '2026-05-11', time: '21:05', keyword: 'deportes',   snippet: 'En deportes, el equipo nacional consigue una victoria contundente frente a su rival.',                     sentiment: 'positivo', score: 0.88 },
+    { id: 'M-9828', channel: 'TV Azteca',    type: 'TV',    date: '2026-05-09', time: '20:00', keyword: 'deportes',   snippet: 'Final cardiaca en deportes con goleada inesperada en el último minuto.',                                   sentiment: 'positivo', score: 0.95 },
+  ];
 
-  const input = document.getElementById('pv-search') as HTMLInputElement | null;
-  const resultsEl = document.getElementById('pv-results');
-  const statsEl = document.getElementById('pv-stats');
+  // ===== Queries cycled by the demo =====
+  const queries = ['presidente', 'economía', 'deportes'];
 
+  // ===== Live transcription stream snippets =====
+  const liveFeeds = [
+    { channel: 'Canal 11',     type: 'TV',    text: 'En el noticiero de hoy, el presidente anunció una nueva política económica que entrará en vigor el próximo mes' },
+    { channel: 'Radio Centro', type: 'Radio', text: 'La economía mexicana muestra señales claras de recuperación según el más reciente informe del Banco de México' },
+    { channel: 'TV Azteca',    type: 'TV',    text: 'En la sección de deportes, el equipo nacional consigue una victoria contundente frente a su rival directo' },
+    { channel: 'W Radio',      type: 'Radio', text: 'Analistas advierten sobre la volatilidad económica frente al cierre del trimestre fiscal en curso' },
+  ];
+
+  // ===== DOM refs =====
+  const channelsEl   = document.getElementById('pv-channels');
+  const currentChEl  = document.getElementById('pv-current-channel');
+  const transcriptEl = document.getElementById('pv-transcript');
+  const ingestStatus = document.getElementById('pv-ingest-status');
+  const queryTextEl  = document.getElementById('pv-query-text');
+  const stepEls      = Array.from(document.querySelectorAll<HTMLElement>('.pv-step'));
+  const resultsEl    = document.getElementById('pv-results');
+
+  // Render the channel chips
+  if (channelsEl) {
+    channelsEl.innerHTML = channels.map((c) => `
+      <div class="pv-channel flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-[color:var(--color-bg-elev)] border border-[color:var(--color-border)]" data-ch="${c.id}">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="font-mono text-[10px] px-1.5 py-0.5 rounded ${c.type === 'TV' ? 'bg-[color:var(--color-accent)] text-[color:var(--color-bg)]' : 'bg-[color:var(--color-violet)] text-[color:var(--color-bg)]'}">${c.type}</span>
+          <span class="font-mono text-xs text-[color:var(--color-fg-muted)] truncate">${c.name}</span>
+        </div>
+        <span class="font-mono text-[10px] text-[color:var(--color-fg-dim)]">●</span>
+      </div>
+    `).join('');
+  }
+
+  // ===== Helpers =====
   function sentimentColor(s: Mention['sentiment']) {
-    if (s === 'positivo') return 'var(--color-accent)';
-    if (s === 'negativo') return 'var(--color-rose)';
-    return 'var(--color-fg-muted)';
+    if (s === 'positivo') return '#34d399';
+    if (s === 'negativo') return '#fb7185';
+    return '#97a3b6';
   }
 
   function highlight(text: string, q: string) {
     if (!q) return text;
-    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')})`, 'gi');
+    const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`(${safe})`, 'gi');
     return text.replace(re, '<mark style="background:var(--color-accent-glow);color:var(--color-accent);padding:1px 3px;border-radius:3px">$1</mark>');
   }
 
-  function semanticScore(m: Mention, q: string): number {
-    if (!q) return 0;
-    const qLower = q.toLowerCase().trim();
-    if (m.keyword.toLowerCase().includes(qLower) || m.snippet.toLowerCase().includes(qLower)) return m.score;
-    for (const [k, syns] of Object.entries(synonyms)) {
-      if (syns.some((s) => s.toLowerCase().includes(qLower) || qLower.includes(s.toLowerCase()))) {
-        if (m.keyword === k) return m.score * 0.7;
-      }
+  function setStep(idx: number, state: 'idle' | 'active' | 'done', val?: string) {
+    const el = stepEls[idx];
+    if (!el) return;
+    if (state === 'idle') delete el.dataset.state;
+    else el.dataset.state = state;
+    if (val !== undefined) {
+      const v = el.querySelector('.pv-step__val');
+      if (v) v.textContent = val;
     }
-    return 0;
   }
 
-  function render(q: string) {
-    if (!resultsEl || !statsEl) return;
-    const trimmed = q.trim();
-    let list: { m: Mention; rel: number }[];
+  function highlightChannel(name: string | null) {
+    document.querySelectorAll<HTMLElement>('.pv-channel').forEach((el) => {
+      const chId = el.dataset.ch ?? '';
+      const ch = channels.find((c) => c.id === chId);
+      el.classList.toggle('pv-channel--active', ch?.name === name);
+    });
+  }
 
-    if (!trimmed) {
-      list = mentions.map((m) => ({ m, rel: m.score }));
-    } else {
-      list = mentions
-        .map((m) => ({ m, rel: semanticScore(m, trimmed) }))
-        .filter((x) => x.rel > 0)
-        .sort((a, b) => b.rel - a.rel);
+  function sleep(ms: number): Promise<void> {
+    return new Promise((res) => setTimeout(res, ms));
+  }
+
+  // ===== Live transcription typewriter =====
+  let liveIdx = 0;
+  async function liveLoop() {
+    while (true) {
+      const feed = liveFeeds[liveIdx];
+      if (currentChEl)  currentChEl.textContent  = `${feed.type} · ${feed.channel}`;
+      if (transcriptEl) transcriptEl.textContent = '';
+      if (ingestStatus) ingestStatus.textContent = `Whisper · transcribiendo ${feed.channel}…`;
+      highlightChannel(feed.channel);
+
+      const words = feed.text.split(' ');
+      for (const w of words) {
+        if (transcriptEl) transcriptEl.textContent += (transcriptEl.textContent ? ' ' : '') + w;
+        await sleep(95);
+      }
+      if (ingestStatus) ingestStatus.textContent = `segmento guardado · ${feed.channel}`;
+      await sleep(900);
+      liveIdx = (liveIdx + 1) % liveFeeds.length;
     }
+  }
 
-    statsEl.textContent = `${trimmed ? (list.length + ' resultado' + (list.length === 1 ? '' : 's')) : (mentions.length + ' menciones recientes')}`;
+  // ===== Search demo cycle =====
+  async function typeQuery(q: string) {
+    if (queryTextEl) queryTextEl.textContent = '';
+    for (const ch of q) {
+      if (queryTextEl) queryTextEl.textContent += ch;
+      await sleep(80);
+    }
+  }
 
+  async function clearQuery() {
+    if (!queryTextEl) return;
+    const cur = queryTextEl.textContent ?? '';
+    for (let i = cur.length; i >= 0; i--) {
+      queryTextEl.textContent = cur.slice(0, i);
+      await sleep(35);
+    }
+  }
+
+  function searchMentions(q: string): Mention[] {
+    return mentions
+      .filter((m) => m.keyword === q || m.snippet.toLowerCase().includes(q.toLowerCase()))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+  }
+
+  function renderResults(list: Mention[], q: string) {
+    if (!resultsEl) return;
     if (list.length === 0) {
-      resultsEl.innerHTML = `<div class="text-sm text-[color:var(--color-fg-dim)] text-center py-8 font-mono">Sin resultados para "${trimmed}"</div>`;
+      resultsEl.innerHTML = `<p class="font-mono text-xs text-[color:var(--color-fg-dim)] italic text-center py-4">sin resultados para "${q}"</p>`;
       return;
     }
-
-    resultsEl.innerHTML = list.map(({ m, rel }) => `
-      <div class="card p-4 hover:border-[color:var(--color-accent)] transition-colors">
-        <div class="flex items-center justify-between mb-2 gap-2 flex-wrap">
+    resultsEl.innerHTML = list.map((m, i) => `
+      <div class="pv-result card p-3" style="animation-delay: ${i * 120}ms">
+        <div class="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
           <div class="flex items-center gap-2">
-            <span class="badge ${m.type === 'TV' ? 'badge-accent' : ''}">${m.type}</span>
-            <span class="font-mono text-xs text-[color:var(--color-fg-muted)]">${m.channel}</span>
+            <span class="font-mono text-[10px] px-1.5 py-0.5 rounded ${m.type === 'TV' ? 'bg-[color:var(--color-accent)] text-[color:var(--color-bg)]' : 'bg-[color:var(--color-violet)] text-[color:var(--color-bg)]'}">${m.type}</span>
+            <span class="font-mono text-[10px] text-[color:var(--color-fg-muted)]">${m.channel}</span>
           </div>
-          <span class="font-mono text-xs text-[color:var(--color-fg-dim)]">${m.date} · ${m.time}</span>
+          <span class="font-mono text-[10px] text-[color:var(--color-fg-dim)]">${m.date} · ${m.time}</span>
         </div>
-        <p class="text-sm leading-relaxed mb-3 text-[color:var(--color-fg)]">${highlight(m.snippet, trimmed)}</p>
-        <div class="flex items-center justify-between text-xs font-mono">
+        <p class="text-xs leading-relaxed mb-2 text-[color:var(--color-fg)]">${highlight(m.snippet, q)}</p>
+        <div class="flex items-center justify-between text-[10px] font-mono">
           <span style="color:${sentimentColor(m.sentiment)}">● ${m.sentiment}</span>
-          <span class="text-[color:var(--color-fg-dim)]">rel: ${rel.toFixed(2)}</span>
+          <span class="text-[color:var(--color-fg-dim)]">rel: ${m.score.toFixed(2)}</span>
         </div>
       </div>
     `).join('');
   }
 
-  input?.addEventListener('input', (e) => render((e.target as HTMLInputElement).value));
-  document.querySelectorAll<HTMLButtonElement>('.pv-suggest').forEach((b) => {
-    b.addEventListener('click', () => {
-      if (input) {
-        input.value = b.dataset.q ?? '';
-        render(input.value);
-      }
-    });
-  });
+  async function searchCycle() {
+    let qIdx = 0;
+    while (true) {
+      const q = queries[qIdx];
+      // Reset
+      if (resultsEl) resultsEl.innerHTML = '';
+      stepEls.forEach((_, i) => setStep(i, 'idle', '—'));
+      await clearQuery();
+      await sleep(300);
 
-  render('');
+      await typeQuery(q);
+      await sleep(450);
+
+      // Step 1: embedding
+      setStep(0, 'active', '…');
+      await sleep(900);
+      setStep(0, 'done', '1024-d');
+
+      // Step 2: vector search
+      setStep(1, 'active', '…');
+      await sleep(750);
+      const hits = searchMentions(q);
+      setStep(1, 'done', `${hits.length} hits`);
+
+      // Step 3: context + sentiment
+      setStep(2, 'active', '…');
+      await sleep(900);
+      const avgSent = hits.length > 0 ? hits[0].sentiment : 'neutral';
+      setStep(2, 'done', avgSent);
+
+      // Results pop
+      renderResults(hits, q);
+
+      // Hold
+      await sleep(4200);
+
+      qIdx = (qIdx + 1) % queries.length;
+    }
+  }
+
+  // Kick off both loops independently
+  liveLoop();
+  searchCycle();
 </script>

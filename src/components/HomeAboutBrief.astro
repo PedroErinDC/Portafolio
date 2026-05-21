@@ -1,0 +1,26 @@
+---
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const isES = lang === 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const aboutHref = isES ? '/sobre-mi' : '/en/about';
+---
+
+<section class="container-page py-6 md:py-10">
+  <div class="card p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div class="max-w-2xl">
+      <p class="section-kicker mb-2">{isES ? 'Quién soy' : 'Who I am'}</p>
+      <p class="text-base md:text-lg text-[color:var(--color-fg-muted)] leading-relaxed">
+        {isES
+          ? 'Software Engineer egresado de la UNAM. Trabajo en visión computacional, NLP y arquitecturas full-stack. Actualmente en Celestial Dynamics.'
+          : 'Software Engineer, UNAM graduate. I work on computer vision, NLP and full-stack architectures. Currently at Celestial Dynamics.'}
+      </p>
+    </div>
+    <a href={base + aboutHref} class="btn shrink-0">
+      {isES ? 'Conoce más' : 'Read more'}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+    </a>
+  </div>
+</section>

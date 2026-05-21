@@ -1,0 +1,269 @@
+---
+import TechBadge from './TechBadge.astro';
+import SectionHeader from './SectionHeader.astro';
+import { tech } from '../data/tech';
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const isES = lang === 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const CELESTIAL_BG = 'radial-gradient(120% 100% at 0% 0%, rgba(255, 255, 255, 0.95), rgba(226, 232, 240, 0.85) 60%, rgba(203, 213, 225, 0.80))';
+const UNAM_BG = 'radial-gradient(120% 100% at 0% 0%, #2B5BA8 0%, #1F3F73 55%, #14284D 100%)';
+
+const projects = [
+  {
+    title: isES ? 'CEDIS Vision — Detección de Pallets y Sacos' : 'CEDIS Vision — Pallet and Sack Detection',
+    summary: isES
+      ? 'CCTV industrial con detección de pallets y conteo de sacos sobre Jetson Nano.'
+      : 'Industrial CCTV with pallet detection and sack counting on Jetson Nano.',
+    href: isES ? '/trabajo/cedis-vision' : '/en/work/cedis-vision',
+    tags: ['yolo', 'tensorrt', 'jetson', 'react'],
+    company: { name: 'Celestial Dynamics', logo: '/companies/celestial.png', bg: CELESTIAL_BG },
+    video: '/demos/cedis-thumb.mp4',
+    videoPoster: '/demos/cedis-thumb-poster.jpg',
+  },
+  {
+    title: 'PublicVector — Media Monitoring',
+    summary: isES
+      ? 'Monitoreo TV/Radio 24/7 con Whisper, búsqueda semántica Milvus y análisis Qwen2.5.'
+      : 'TV/Radio 24/7 monitoring with Whisper, Milvus semantic search and Qwen2.5 analysis.',
+    href: isES ? '/trabajo/publicvector' : '/en/work/publicvector',
+    tags: ['whisper', 'milvus', 'qwen', 'springboot'],
+    company: { name: 'Celestial Dynamics', logo: '/companies/celestial.png', bg: CELESTIAL_BG },
+    video: '/demos/publicvector-thumb.mp4',
+    videoPoster: '/demos/publicvector-thumb-poster.jpg',
+  },
+  {
+    title: isES ? 'Juego Educativo — Unity' : 'Educational Game — Unity',
+    summary: isES
+      ? 'Plataformero 2D pixel art con checkpoints, power-ups y trampas autónomas. Unity + C# en UNAM.'
+      : 'Pixel-art 2D platformer with checkpoints, power-ups and autonomous traps. Unity + C# at UNAM.',
+    href: isES ? '/escuela/juego-unity' : '/en/school/unity-game',
+    tags: ['unity', 'csharp', 'tilemap', 'gamedesign'],
+    company: { name: 'UNAM', logo: '/companies/unam.png', bg: UNAM_BG },
+    video: '/demos/unity/mec-checkpoints.mp4',
+    videoPoster: '/demos/unity/mec-checkpoints-poster.jpg',
+  },
+];
+
+const ctaLabel = isES ? 'Ver detalles' : 'View details';
+const marqueeProjects = [...projects, ...projects];
+---
+
+<section class="container-page py-10 md:py-12">
+  <SectionHeader
+    title={isES ? 'Proyectos' : 'Projects'}
+    subtitle={isES
+      ? 'Vista rápida del portafolio. Hover para pausar el carrusel.'
+      : 'Portfolio at a glance. Hover to pause the carousel.'}
+  />
+
+  <div class="home-marquee" data-pauseable>
+    <div class="home-marquee__track">
+      {marqueeProjects.map((p, i) => {
+        const isClone = i >= projects.length;
+        const heroTech = p.tags.find((id) => tech[id]);
+        const heroEntry = heroTech ? tech[heroTech] : null;
+        return (
+          <a
+            href={base + p.href}
+            class="home-marquee__card group"
+            aria-hidden={isClone ? 'true' : undefined}
+            tabindex={isClone ? -1 : 0}
+            style={heroEntry ? `--proj-accent: ${heroEntry.color}` : ''}
+          >
+            <div
+              class={`home-marquee__art ${(p as any).video ? 'home-marquee__art--video' : ''}`}
+              style={`background: ${p.company.bg}`}
+              title={p.company.name}
+              aria-hidden="true"
+            >
+              {(p as any).video ? (
+                <video
+                  class="home-marquee__video"
+                  src={base + (p as any).video}
+                  poster={base + (p as any).videoPoster}
+                  muted
+                  loop
+                  playsinline
+                  preload="metadata"
+                ></video>
+              ) : (
+                <img
+                  class="home-marquee__company-logo"
+                  src={base + p.company.logo}
+                  alt={p.company.name}
+                  width="280"
+                  height="140"
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
+            </div>
+
+            <div class="home-marquee__body">
+              <h3 class="font-mono text-base font-semibold mb-2 leading-tight group-hover:text-[color:var(--color-accent)] transition-colors break-words">{p.title}</h3>
+              <p class="text-xs text-[color:var(--color-fg-muted)] mb-4 leading-relaxed line-clamp-3">{p.summary}</p>
+
+              <div class="flex flex-wrap gap-1.5 mb-4">
+                {p.tags.map((tag) => (
+                  tech[tag]
+                    ? <TechBadge id={tag as keyof typeof tech} size="sm" variant="minimal" />
+                    : <span class="badge">{tag}</span>
+                ))}
+              </div>
+
+              <span class="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--color-accent)] mt-auto">
+                {ctaLabel}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<style>
+  .home-marquee {
+    position: relative;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%);
+  }
+
+  .home-marquee__track {
+    display: flex;
+    width: max-content;
+    animation: home-marquee-flow 32s linear infinite;
+    will-change: transform;
+  }
+
+  .home-marquee:hover .home-marquee__track,
+  .home-marquee:focus-within .home-marquee__track {
+    animation-play-state: paused;
+  }
+
+  @keyframes home-marquee-flow {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .home-marquee__card {
+    --proj-accent: var(--color-accent);
+    flex-shrink: 0;
+    width: 300px;
+    margin-right: 1rem;
+    border-radius: 0.85rem;
+    background-color: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    transition: border-color 250ms ease, transform 250ms ease, box-shadow 250ms ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  @media (min-width: 640px) {
+    .home-marquee__card { width: 340px; }
+  }
+
+  .home-marquee__card:hover {
+    border-color: var(--proj-accent);
+    transform: translateY(-3px);
+    box-shadow:
+      0 18px 40px -22px color-mix(in srgb, var(--proj-accent) 50%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--proj-accent) 25%, transparent);
+  }
+
+  .home-marquee__art {
+    position: relative;
+    height: 150px;
+    border-bottom: 1px solid var(--color-border);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 20px;
+  }
+
+  .home-marquee__company-logo {
+    max-width: 88%;
+    max-height: 88%;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+    transition: transform 300ms ease;
+  }
+
+  .home-marquee__card:hover .home-marquee__company-logo {
+    transform: scale(1.05);
+  }
+
+  /* Video thumbnail variant */
+  .home-marquee__art--video {
+    padding: 0;
+  }
+  .home-marquee__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 350ms ease, filter 350ms ease;
+    filter: saturate(0.95) brightness(0.92);
+  }
+  .home-marquee__card:hover .home-marquee__video {
+    transform: scale(1.04);
+    filter: saturate(1) brightness(1);
+  }
+
+
+  .home-marquee__body {
+    padding: 1.1rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-marquee__track { animation: none; }
+    .home-marquee { overflow-x: auto; mask-image: none; }
+    .home-marquee__video { transition: none; }
+  }
+</style>
+
+<script>
+  // Cards with video thumbnails: play on hover, pause + reset on leave.
+  document.querySelectorAll<HTMLElement>('.home-marquee__card').forEach((card) => {
+    const video = card.querySelector<HTMLVideoElement>('.home-marquee__video');
+    if (!video) return;
+
+    function start() {
+      if (!video) return;
+      video.currentTime = 0;
+      video.play().catch(() => {});
+    }
+    function stop() {
+      if (!video) return;
+      video.pause();
+      video.currentTime = 0;
+    }
+
+    card.addEventListener('mouseenter', start);
+    card.addEventListener('focus', start);
+    card.addEventListener('mouseleave', stop);
+    card.addEventListener('blur', stop);
+  });
+</script>

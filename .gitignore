@@ -26,3 +26,6 @@ pnpm-debug.log*
 # VS Code settings (kept per-project optionally)
 # .vscode/
 
+# personal scratch space (source videos, screenshots, drafts)
+ideas/
+

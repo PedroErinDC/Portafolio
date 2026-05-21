@@ -1,0 +1,78 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProjectShell from '../../components/ProjectShell.astro';
+import CedisVisionDemo from '../../components/CedisVisionDemo.astro';
+import CedisFeatures from '../../components/CedisFeatures.astro';
+import TechCard from '../../components/TechCard.astro';
+
+const lang = 'es' as const;
+const highlights = [
+  'Detección de pallets y conteo automático de sacos con YOLO11-seg + RF-DETR sobre segmentación ROI.',
+  'Pipeline de inferencia optimizado con NVIDIA TensorRT (FP16) sobre Jetson Nano, latencia <50ms por frame.',
+  'Dashboard operativo en React 19 + TypeScript con streaming HLS de baja latencia para visualización en tiempo real.',
+  'Backend con Node.js 22 + tRPC + Drizzle ORM sobre MySQL para gestión de inventario industrial.',
+  'Sistema de alertas automático y generación de QR codes para pallets completos.',
+  'Soporte simultáneo para 4 cámaras IP (RTSP) con conversión a HLS, expandible.',
+];
+
+const stackGroups = [
+  {
+    label: 'Visión y modelos',
+    items: [
+      { id: 'yolo',     caption: 'detección',   reason: 'YOLO 11-seg es el detector de objetos en tiempo real más balanceado en 2025: ~28 fps sobre Jetson Nano con buena mAP en clases pequeñas. La variante de segmentación permite obtener máscaras pixel-level del pallet para definir ROI dinámicas, no solo cajas.' },
+      { id: 'rfdetr',   caption: 'conteo',      reason: 'RF-DETR (DETR + Roboflow) maneja mejor que YOLO los escenarios con oclusión parcial y objetos apilados — exactamente el caso de sacos sobre pallet. Mayor recall a costa de un poco más de latencia, mitigada en TensorRT.' },
+      { id: 'tensorrt', caption: 'FP16',        reason: 'TensorRT optimiza el grafo de PyTorch a kernels CUDA fusionados. La cuantización FP16 reduce uso de VRAM ~50% y baja latencia ~3× sin pérdida perceptible de mAP, lo que permite inferencia en tiempo real sobre Jetson Nano (4 GB).' },
+      { id: 'cuda',     caption: 'aceleración', reason: 'Toda la inferencia corre en GPU vía CUDA. Sin aceleración GPU el modelo correría a ~3 fps en CPU del Jetson, inservible para CCTV en vivo. CUDA es nativo del stack Jetson.' },
+      { id: 'jetson',   caption: 'edge',        reason: 'Jetson Nano permite correr inferencia local en el CEDIS, sin enviar video a la nube. Ventajas: menor latencia (<50ms), cero costo de ancho de banda saliente, video propietario nunca sale de la planta, opera incluso con internet caído.' },
+    ],
+  },
+  {
+    label: 'Backend & datos',
+    items: [
+      { id: 'nodejs',  caption: 'runtime',    reason: 'Node.js 22 ofrece WebSockets nativos, runtime no bloqueante para handle de eventos en vivo desde el Jetson y excelente ecosistema TypeScript. Single language fullstack reduce fricción de equipo.' },
+      { id: 'trpc',    caption: 'API',        reason: 'tRPC genera tipos end-to-end entre backend y frontend sin OpenAPI/codegen intermedio. Cambios al schema se reflejan instantáneamente en autocompletado del cliente, lo que reduce bugs de integración.' },
+      { id: 'drizzle', caption: 'ORM',        reason: 'Drizzle infiere tipos desde el schema SQL real (no decoradores como Prisma). Queries más explícitas, ~3× más rápido en runtime y compatible con edge runtimes para deploy futuro.' },
+      { id: 'mysql',   caption: 'DB',         reason: 'MySQL elegido por compatibilidad con el stack existente del cliente y por su madurez en JOINs complejos para reportes (pallets por turno, picos por hora, agregaciones por cámara).' },
+      { id: 'docker',  caption: 'containers', reason: 'Empaquetar el servicio de inferencia + servidor en contenedores hace el deploy en Jetson reproducible. Permite rollback fácil y separar dependencias CUDA del sistema host.' },
+      { id: 'ffmpeg',  caption: 'streaming',  reason: 'FFmpeg captura los 4 RTSP en paralelo, hace transcoding a HLS de baja latencia y extrae frames sincronizados para el modelo. Es el estándar de facto en pipelines de video — robusto bajo desconexiones.' },
+    ],
+  },
+  {
+    label: 'Frontend',
+    items: [
+      { id: 'react',      caption: 'UI',       reason: 'React 19 con concurrent rendering mantiene fluido el dashboard cuando llegan 28 actualizaciones por segundo desde el WebSocket. Suspense + transitions evitan jank al cambiar entre vistas multi-cámara.' },
+      { id: 'typescript', caption: 'lenguaje', reason: 'Tipos compartidos con backend vía tRPC eliminan toda una clase de bugs (campos mal tipeados, props faltantes). Refactors grandes se hacen con confianza guiados por el compilador.' },
+      { id: 'hls',        caption: 'video',    reason: 'HLS (HTTP Live Streaming) corre nativo en todos los navegadores modernos y permite latencia <1.5s con segmentos cortos. Mejor compatibilidad que WebRTC en redes corporativas con firewalls restrictivos.' },
+    ],
+  },
+] as const;
+---
+
+<Layout title="CEDIS Vision — Pedro Erin Diaz Cumes" lang={lang}>
+  <ProjectShell
+    lang={lang}
+    title="CEDIS Vision — Detección de Pallets y Sacos"
+    summary="Sistema integral de visión computacional para centros de distribución. Detecta pallets y cuenta sacos en tiempo real sobre hardware edge (Jetson Nano), reduciendo costos operativos del monitoreo manual."
+    tags={['YOLO11-seg', 'RF-DETR', 'TensorRT FP16', 'CUDA', 'Jetson Nano', 'React 19', 'TypeScript', 'tRPC', 'Drizzle ORM', 'MySQL', 'Docker', 'HLS']}
+    year="2025"
+    role="Software Engineer · IA & Full-Stack"
+    backHref="/proyectos"
+    category="work"
+    hideHighlightsTitle={true}
+  >
+    <CedisVisionDemo slot="demo" lang={lang} />
+
+    <CedisFeatures slot="highlights" lang={lang} />
+
+    <div slot="architecture" class="space-y-8">
+      {stackGroups.map((g) => (
+        <div>
+          <h3 class="font-mono text-xs uppercase tracking-widest text-[color:var(--color-accent)] mb-4">// {g.label}</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {g.items.map((it) => <TechCard id={it.id as any} caption={it.caption} reason={(it as any).reason} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  </ProjectShell>
+</Layout>

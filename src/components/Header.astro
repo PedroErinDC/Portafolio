@@ -9,13 +9,13 @@ interface Props {
 
 const { lang, pathname } = Astro.props;
 const t = useTranslations(lang);
-const alt = altLangPath(lang, pathname);
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const alt = altLangPath(lang, pathname, base);
 
 const isES = lang === 'es';
 const links = [
-  { key: 'nav.work' as const, href: isES ? '/trabajo' : '/en/work' },
-  { key: 'nav.school' as const, href: isES ? '/escuela' : '/en/school' },
+  { key: 'nav.about' as const, href: isES ? '/sobre-mi' : '/en/about' },
+  { key: 'nav.projects' as const, href: isES ? '/proyectos' : '/en/projects' },
   { key: 'nav.contact' as const, href: isES ? '/contacto' : '/en/contact' },
 ];
 const homeHref = isES ? '/' : '/en/';
@@ -41,7 +41,7 @@ const homeHref = isES ? '/' : '/en/';
 
     <div class="flex items-center gap-2">
       <a
-        href={base + alt.href}
+        href={alt.href}
         class="badge hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)] transition-colors"
         aria-label={`Switch to ${alt.lang.toUpperCase()}`}
       >

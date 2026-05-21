@@ -1,0 +1,410 @@
+---
+import TechBadge from './TechBadge.astro';
+import { tech } from '../data/tech';
+
+interface ProjectMini {
+  title: string;
+  summary: string;
+  href: string;
+  /** Tech registry IDs (preferred) or free-text fallback tags. */
+  tags: string[];
+  /** Optional MP4 path (under public/) to play on hover instead of showing the tech icon. */
+  video?: string;
+  /** Optional JPG/PNG poster path shown when paused. */
+  videoPoster?: string;
+}
+
+interface Props {
+  logo: string;          // path under public/, eg "/companies/celestial.png"
+  logoAlt: string;
+  company: string;
+  role: string;
+  period: string;
+  /** Optional secondary line between role and location (e.g. faculty, department). */
+  affiliation?: string;
+  location?: string;
+  url?: string;
+  projects: ProjectMini[];
+  ctaLabel: string;
+  projectsLabel: string;
+  /** Optional custom CSS `background` value for the logo box (e.g. UNAM blue). */
+  logoBg?: string;
+  /** Two CSS colors used in the glow accent ring around the logo box. Defaults to emerald+violet. */
+  logoAccent?: [string, string];
+}
+
+const {
+  logo,
+  logoAlt,
+  company,
+  role,
+  period,
+  affiliation,
+  location,
+  url,
+  projects,
+  ctaLabel,
+  projectsLabel,
+  logoBg,
+  logoAccent,
+} = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const logoStyleParts: string[] = [];
+if (logoBg) logoStyleParts.push(`background: ${logoBg}`);
+if (logoAccent) {
+  logoStyleParts.push(`--logo-accent-a: ${logoAccent[0]}`);
+  logoStyleParts.push(`--logo-accent-b: ${logoAccent[1]}`);
+}
+const logoStyle = logoStyleParts.join('; ');
+
+// Duplicate projects so the marquee can scroll seamlessly.
+const marqueeProjects = [...projects, ...projects];
+---
+
+<article class="company-card relative overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-soft)] p-6 md:p-8">
+  <span class="company-card__glow" aria-hidden="true"></span>
+
+  <div class="relative flex flex-col md:flex-row md:items-center gap-6 md:gap-8 mb-8">
+    <div
+      class="company-card__logo shrink-0 w-40 h-24 md:w-48 md:h-28 rounded-xl flex items-center justify-center p-2"
+      style={logoStyle}
+    >
+      <img
+        src={base + logo}
+        alt={logoAlt}
+        width="320"
+        height="160"
+        loading="lazy"
+        decoding="async"
+        class="max-w-full max-h-full object-contain relative z-10"
+      />
+    </div>
+
+    <div class="flex-1">
+      <p class="font-mono text-xs text-[color:var(--color-accent)] mb-1">// {period}</p>
+      {url ? (
+        <a href={url} target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 group">
+          <h3 class="text-2xl md:text-3xl font-semibold group-hover:text-[color:var(--color-accent)] transition-colors">{company}</h3>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[color:var(--color-fg-dim)] group-hover:text-[color:var(--color-accent)] transition-colors">
+            <path d="M7 17L17 7M17 7H7M17 7V17"/>
+          </svg>
+        </a>
+      ) : (
+        <h3 class="text-2xl md:text-3xl font-semibold">{company}</h3>
+      )}
+      <p class="text-sm md:text-base text-[color:var(--color-fg-muted)] mt-1">{role}</p>
+      {affiliation && <p class="text-sm text-[color:var(--color-fg-muted)] mt-1">{affiliation}</p>}
+      {location && <p class="text-xs text-[color:var(--color-fg-dim)] mt-1 font-mono">{location}</p>}
+    </div>
+  </div>
+
+  <div class="relative">
+    <p class="font-mono text-xs uppercase tracking-widest text-[color:var(--color-fg-dim)] mb-4">// {projectsLabel}</p>
+
+    <div class="company-card__marquee" data-pauseable>
+      <div class="company-card__marquee-track">
+        {marqueeProjects.map((p, i) => {
+          const isClone = i >= projects.length;
+          const heroTech = p.tags.find((id) => tech[id]);
+          const heroEntry = heroTech ? tech[heroTech] : null;
+          return (
+            <a
+              href={base + p.href}
+              class="company-card__project group"
+              aria-hidden={isClone ? 'true' : undefined}
+              tabindex={isClone ? -1 : 0}
+              style={heroEntry ? `--proj-accent: ${heroEntry.color}` : ''}
+            >
+              <div class={`company-card__project-art ${p.video ? 'company-card__project-art--video' : ''}`} aria-hidden="true">
+                {p.video ? (
+                  <video
+                    class="company-card__project-video"
+                    src={base + p.video}
+                    poster={p.videoPoster ? base + p.videoPoster : undefined}
+                    muted
+                    loop
+                    playsinline
+                    preload="metadata"
+                  ></video>
+                ) : (
+                  <>
+                    <span class="company-card__project-art-grid"></span>
+                    {heroEntry && (
+                      heroEntry.slug ? (
+                        <img
+                          class="company-card__project-art-icon"
+                          src={`https://cdn.simpleicons.org/${heroEntry.slug}`}
+                          alt=""
+                          width="80"
+                          height="80"
+                          loading="lazy"
+                          decoding="async"
+                          style={heroEntry.invertOnDark ? 'filter: brightness(0) invert(1)' : ''}
+                        />
+                      ) : (
+                        <span class="company-card__project-art-initial">{heroEntry.initial}</span>
+                      )
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div class="company-card__project-body">
+                <h4 class="font-mono text-base font-semibold mb-2 leading-tight group-hover:text-[color:var(--color-accent)] transition-colors break-words">{p.title}</h4>
+                <p class="text-xs text-[color:var(--color-fg-muted)] mb-4 leading-relaxed line-clamp-3">{p.summary}</p>
+
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                  {p.tags.map((tag) => (
+                    tech[tag]
+                      ? <TechBadge id={tag as keyof typeof tech} size="sm" variant="minimal" />
+                      : <span class="badge">{tag}</span>
+                  ))}
+                </div>
+
+                <span class="inline-flex items-center gap-1 text-xs font-medium text-[color:var(--color-accent)] mt-auto">
+                  {ctaLabel}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </span>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</article>
+
+<style>
+  .company-card {
+    transition: border-color 250ms ease;
+  }
+
+  .company-card:hover {
+    border-color: var(--color-border-strong);
+  }
+
+  .company-card__glow {
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+    border-radius: 1rem;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(52, 211, 153, 0.32) 60deg,
+      transparent 120deg,
+      transparent 240deg,
+      rgba(167, 139, 250, 0.28) 300deg,
+      transparent 360deg
+    );
+    opacity: 0.55;
+    filter: blur(32px);
+    z-index: 0;
+    animation: company-glow-rotate 16s linear infinite;
+  }
+
+  @keyframes company-glow-rotate {
+    to { transform: rotate(1turn); }
+  }
+
+  .company-card__logo {
+    position: relative;
+    background:
+      radial-gradient(120% 100% at 0% 0%, rgba(255, 255, 255, 0.95), rgba(226, 232, 240, 0.85) 60%, rgba(203, 213, 225, 0.80));
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+      0 18px 40px -22px rgba(52, 211, 153, 0.45),
+      0 0 0 1px rgba(52, 211, 153, 0.15);
+  }
+
+  .company-card__logo::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, var(--logo-accent-a, rgba(52, 211, 153, 0.5)), transparent 40%, var(--logo-accent-b, rgba(167, 139, 250, 0.4)));
+    z-index: -1;
+    opacity: 0.7;
+    filter: blur(10px);
+  }
+
+  .company-card__marquee {
+    position: relative;
+    overflow: hidden;
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 48px,
+      black calc(100% - 48px),
+      transparent 100%
+    );
+  }
+
+  .company-card__marquee-track {
+    display: flex;
+    width: max-content;
+    animation: company-marquee 28s linear infinite;
+    will-change: transform;
+  }
+
+  .company-card__marquee:hover .company-card__marquee-track,
+  .company-card__marquee:focus-within .company-card__marquee-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes company-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .company-card__project {
+    --proj-accent: var(--color-accent);
+    flex-shrink: 0;
+    width: 300px;
+    margin-right: 1rem;
+    border-radius: 0.85rem;
+    background-color: var(--color-bg-elev);
+    border: 1px solid var(--color-border);
+    transition: border-color 250ms ease, transform 250ms ease, box-shadow 250ms ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  @media (min-width: 640px) {
+    .company-card__project { width: 340px; }
+  }
+
+  .company-card__project:hover {
+    border-color: var(--proj-accent);
+    transform: translateY(-3px);
+    box-shadow:
+      0 18px 40px -22px color-mix(in srgb, var(--proj-accent) 50%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--proj-accent) 25%, transparent);
+  }
+
+  .company-card__project-art {
+    position: relative;
+    height: 110px;
+    border-bottom: 1px solid var(--color-border);
+    background:
+      radial-gradient(120% 100% at 50% 110%, color-mix(in srgb, var(--proj-accent) 28%, transparent) 0%, transparent 65%),
+      linear-gradient(135deg, color-mix(in srgb, var(--proj-accent) 8%, transparent) 0%, transparent 60%),
+      var(--color-bg);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .company-card__project-art-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--proj-accent) 15%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--proj-accent) 15%, transparent) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: -1px -1px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 0%, transparent 80%);
+    opacity: 0.55;
+  }
+
+  .company-card__project-art-icon {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    opacity: 0.95;
+    filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--proj-accent) 55%, transparent));
+    transition: transform 350ms ease;
+  }
+
+  .company-card__project-art-initial {
+    position: relative;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--proj-accent);
+    text-shadow: 0 8px 24px color-mix(in srgb, var(--proj-accent) 55%, transparent);
+  }
+
+  .company-card__project:hover .company-card__project-art-icon {
+    transform: translateY(-3px) scale(1.06);
+  }
+
+  /* Video thumbnail variant */
+  .company-card__project-art--video {
+    background: #000;
+  }
+  .company-card__project-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 350ms ease, filter 350ms ease;
+    filter: saturate(0.95) brightness(0.9);
+  }
+  .company-card__project:hover .company-card__project-video {
+    transform: scale(1.04);
+    filter: saturate(1) brightness(1);
+  }
+
+  .company-card__project-body {
+    padding: 1.1rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .company-card__glow,
+    .company-card__marquee-track {
+      animation: none;
+    }
+    .company-card__marquee {
+      overflow-x: auto;
+      mask-image: none;
+    }
+    .company-card__project-video { transition: none; }
+  }
+</style>
+
+<script>
+  // Cards with video thumbnails: play on hover/focus, pause + reset on leave/blur.
+  document.querySelectorAll<HTMLElement>('.company-card__project').forEach((card) => {
+    const video = card.querySelector<HTMLVideoElement>('.company-card__project-video');
+    if (!video) return;
+
+    function start() {
+      if (!video) return;
+      video.currentTime = 0;
+      video.play().catch(() => {});
+    }
+    function stop() {
+      if (!video) return;
+      video.pause();
+      video.currentTime = 0;
+    }
+
+    card.addEventListener('mouseenter', start);
+    card.addEventListener('focus',      start);
+    card.addEventListener('mouseleave', stop);
+    card.addEventListener('blur',       stop);
+  });
+</script>
