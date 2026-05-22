@@ -1,0 +1,612 @@
+---
+import TechBadge from './TechBadge.astro';
+import SectionHeader from './SectionHeader.astro';
+import { tech } from '../data/tech';
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const isES = lang === 'es';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const CELESTIAL_ACCENT = '#34d399';
+const UNAM_ACCENT      = '#a78bfa';
+
+const projects = [
+  {
+    title: isES ? 'CEDIS Vision' : 'CEDIS Vision',
+    subtitle: isES ? 'Detección de Pallets y Sacos' : 'Pallet & Sack Detection',
+    summary: isES
+      ? 'CCTV industrial con detección de pallets y conteo de sacos sobre Jetson Nano.'
+      : 'Industrial CCTV with pallet detection and sack counting on Jetson Nano.',
+    href: isES ? '/trabajo/cedis-vision' : '/en/work/cedis-vision',
+    tags: ['yolo', 'tensorrt', 'jetson', 'react'],
+    company: 'Celestial Dynamics',
+    accent: CELESTIAL_ACCENT,
+    video: '/demos/cedis-thumb.mp4',
+    poster: '/demos/cedis-thumb-poster.jpg',
+  },
+  {
+    title: 'PublicVector',
+    subtitle: 'Media Monitoring',
+    summary: isES
+      ? 'Monitoreo TV/Radio 24/7 con Whisper, búsqueda semántica Milvus y análisis Qwen2.5.'
+      : 'TV/Radio 24/7 monitoring with Whisper, Milvus semantic search and Qwen2.5 analysis.',
+    href: isES ? '/trabajo/publicvector' : '/en/work/publicvector',
+    tags: ['whisper', 'milvus', 'qwen', 'springboot'],
+    company: 'Celestial Dynamics',
+    accent: CELESTIAL_ACCENT,
+    video: '/demos/publicvector-thumb.mp4',
+    poster: '/demos/publicvector-thumb-poster.jpg',
+  },
+  {
+    title: isES ? 'Juego Educativo' : 'Educational Game',
+    subtitle: 'Unity',
+    summary: isES
+      ? 'Plataformero 2D pixel art con checkpoints, power-ups y trampas autónomas. Unity + C# en UNAM.'
+      : 'Pixel-art 2D platformer with checkpoints, power-ups and autonomous traps. Unity + C# at UNAM.',
+    href: isES ? '/escuela/juego-unity' : '/en/school/unity-game',
+    tags: ['unity', 'csharp', 'tilemap', 'gamedesign'],
+    company: 'UNAM',
+    accent: UNAM_ACCENT,
+    video: '/demos/unity/mec-checkpoints.mp4',
+    poster: '/demos/unity/mec-checkpoints-poster.jpg',
+  },
+];
+
+const ctaLabel = isES ? 'Ver detalles' : 'View details';
+const slideStates = ['current', 'next', 'previous'] as const;
+---
+
+<section class="container-page py-12 md:py-16">
+  <SectionHeader
+    title={isES ? 'Proyectos' : 'Projects'}
+    subtitle={isES
+      ? 'Arrastra para rotar. Haz clic en una tarjeta para fijarla. Clic fuera o Esc para liberar.'
+      : 'Drag to rotate. Click a card to lock it. Click outside or press Esc to release.'}
+  />
+
+  <div class="vs-stage">
+    <!-- Blurred background per project (current's poster fills viewport) -->
+    {projects.map((p, i) => (
+      <div
+        class="vs-bg"
+        data-bg={i}
+        data-state={slideStates[i]}
+        style={`background-image: url('${base}${p.poster}');`}
+      ></div>
+    ))}
+
+    <div class="vs-deck">
+      {projects.map((p, i) => (
+        <div class="vs-slide" data-idx={i} data-state={slideStates[i]} style={`--accent: ${p.accent}`}>
+          <div class="vs-slide__inner">
+            <article class="vs-card">
+
+              <!-- Face 1 (top) — media + title -->
+              <div class="vs-face vs-face--top">
+                <video
+                  class="vs-face__video"
+                  src={base + p.video}
+                  poster={base + p.poster}
+                  muted
+                  loop
+                  playsinline
+                  preload="metadata"
+                ></video>
+                <div class="vs-face__shade"></div>
+                <div class="vs-face__content">
+                  <p class="vs-face__company">{p.company}</p>
+                  <h3 class="vs-face__title">{p.title}</h3>
+                  <p class="vs-face__subtitle">{p.subtitle}</p>
+                </div>
+              </div>
+
+              <!-- Face 2 (bottom) — description + tags + CTA -->
+              <div class="vs-face vs-face--bottom">
+                <div class="vs-face__content">
+                  <p class="vs-face__desc">{p.summary}</p>
+                  <div class="vs-face__tags">
+                    {p.tags.map((tag) => (
+                      tech[tag]
+                        ? <TechBadge id={tag as keyof typeof tech} size="sm" variant="minimal" />
+                        : <span class="badge">{tag}</span>
+                    ))}
+                  </div>
+                  <a href={base + p.href} class="vs-face__cta">
+                    {ctaLabel}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+            </article>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .vs-stage {
+    --slide-w: clamp(260px, 26vw, 380px);
+    --slide-h: clamp(420px, 56vh, 600px);
+    --t-dur: 750ms;
+    --t-ease: cubic-bezier(0.55, 0.24, 0.18, 1);
+    --vs-drag-skew: 0deg;
+
+    position: relative;
+    width: 100%;
+    height: clamp(620px, 80vh, 820px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 24px;
+    cursor: grab;
+    user-select: none;
+  }
+  .vs-stage.vs-dragging { cursor: grabbing; }
+  .vs-stage.vs-dragging .vs-deck {
+    transform: rotateY(var(--vs-drag-skew));
+    transition: transform 120ms ease-out;
+  }
+
+  /* Fullscreen blurred backgrounds, one per project */
+  .vs-bg {
+    position: absolute;
+    inset: -8%;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.1);
+    opacity: 0;
+    z-index: 0;
+    transition: opacity var(--t-dur) ease, transform var(--t-dur) ease;
+    pointer-events: none;
+  }
+  .vs-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 14, 20, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .vs-bg[data-state="current"]  { opacity: 1; }
+  .vs-bg[data-state="previous"] { transform: scale(1.1) translateX(-6%); }
+  .vs-bg[data-state="next"]     { transform: scale(1.1) translateX(6%);  }
+
+  /* 3D deck */
+  .vs-deck {
+    position: relative;
+    width: calc(var(--slide-w) * 3);
+    max-width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    perspective: 1400px;
+  }
+  .vs-deck > * { grid-area: 1 / 1; }
+
+  /* Slide: 3D positioning (current center, sides tilted) */
+  .vs-slide {
+    --slide-tx: 0px;
+    --slide-roty: 0deg;
+    --slide-scale: 1;
+    --slide-tz: 0px;
+
+    width: var(--slide-w);
+    height: var(--slide-h);
+    transform:
+      translate3d(var(--slide-tx), 0, var(--slide-tz))
+      rotateY(var(--slide-roty))
+      scale(var(--slide-scale));
+    transition: transform var(--t-dur) var(--t-ease);
+    cursor: pointer;
+  }
+
+  .vs-slide[data-state="current"] {
+    --slide-tx: 0px;
+    --slide-roty: 0deg;
+    --slide-scale: 1.12;
+    --slide-tz: 80px;
+    z-index: 30;
+    cursor: default;
+  }
+  .vs-slide[data-state="next"] {
+    --slide-tx: calc(var(--slide-w) * 1.05);
+    --slide-roty: -42deg;
+    --slide-scale: 1;
+    z-index: 20;
+  }
+  .vs-slide[data-state="previous"] {
+    --slide-tx: calc(var(--slide-w) * -1.05);
+    --slide-roty: 42deg;
+    --slide-scale: 1;
+    z-index: 10;
+  }
+
+  .vs-slide__inner {
+    --rx: 0deg;
+    --ry: 0deg;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 380ms ease;
+  }
+
+  /* ====== Two-face card ====== */
+  .vs-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    /* faces can pop out a bit on expand without being clipped */
+    overflow: visible;
+  }
+
+  .vs-face {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    transition: transform var(--t-dur) var(--t-ease),
+                box-shadow var(--t-dur) var(--t-ease);
+  }
+
+  .vs-face--top {
+    background: #000;
+    border-radius: 18px 18px 0 0;
+    z-index: 2;
+    transform: translateY(45%);   /* collapsed: pushed DOWN into bottom */
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  }
+
+  .vs-face--bottom {
+    background: var(--color-bg-elev, #11151c);
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--color-border));
+    border-radius: 0 0 18px 18px;
+    z-index: 1;
+    transform: translateY(-45%);  /* collapsed: pulled UP into top */
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55);
+  }
+
+  /* When the slide is OPEN (user clicked / locked), faces separate to top/bottom */
+  .vs-slide[data-open="true"] .vs-face--top    { transform: translateY(0); }
+  .vs-slide[data-open="true"] .vs-face--bottom { transform: translateY(0); }
+
+  /* Media inside face1 */
+  .vs-face__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: filter var(--t-dur) var(--t-ease), transform 400ms ease;
+  }
+  .vs-slide[data-state="current"]  .vs-face__video { filter: brightness(1); }
+  .vs-slide:not([data-state="current"]) .vs-face__video { filter: brightness(0.5); }
+  .vs-slide[data-open="true"] .vs-face__video { filter: brightness(1); }
+
+  .vs-face__shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(10,14,20,0) 35%, rgba(10,14,20,0.85) 100%);
+    pointer-events: none;
+  }
+
+  /* Face1 text overlay (over media) */
+  .vs-face--top .vs-face__content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1rem 1.1rem;
+    z-index: 2;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    opacity: 0.45;
+    transition: opacity var(--t-dur) var(--t-ease);
+  }
+  .vs-slide[data-state="current"] .vs-face--top .vs-face__content { opacity: 0.7; }
+  .vs-slide[data-open="true"] .vs-face--top .vs-face__content      { opacity: 1; }
+
+  .vs-face__company {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.65rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .vs-face__title {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: clamp(1.2rem, 1.9vw, 1.7rem);
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.1;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+  .vs-face__subtitle {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.78rem;
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  /* Face2 text content (text card) */
+  .vs-face--bottom .vs-face__content {
+    padding: 1.2rem 1.2rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    height: 100%;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: opacity var(--t-dur) var(--t-ease);
+  }
+  .vs-slide[data-open="true"] .vs-face--bottom .vs-face__content { opacity: 1; }
+
+  .vs-face__desc {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-fg-muted);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .vs-face__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.1rem;
+  }
+  .vs-face__cta {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    width: max-content;
+    transition: background 200ms ease, color 200ms ease;
+  }
+  .vs-face__cta:hover {
+    background: var(--accent);
+    color: #0a0e14;
+  }
+  .vs-face__cta:hover svg { transform: translateX(2px); }
+  .vs-face__cta svg { transition: transform 200ms ease; }
+
+  /* Mobile tweaks */
+  @media (max-width: 720px) {
+    .vs-stage {
+      --slide-w: 70vw;
+      --slide-h: 480px;
+      height: 680px;
+    }
+    .vs-slide[data-state="next"]     { --slide-tx: calc(var(--slide-w) *  0.85); --slide-roty: -30deg; }
+    .vs-slide[data-state="previous"] { --slide-tx: calc(var(--slide-w) * -0.85); --slide-roty: 30deg; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vs-slide, .vs-face, .vs-bg, .vs-slide__inner, .vs-face__video { transition: none; }
+  }
+</style>
+
+<script>
+  const stage = document.querySelector<HTMLElement>('.vs-stage');
+  if (stage) {
+    const slides = Array.from(stage.querySelectorAll<HTMLElement>('.vs-slide'));
+    const bgs    = Array.from(stage.querySelectorAll<HTMLElement>('.vs-bg'));
+
+    const N = slides.length;
+    const STATES = ['previous', 'current', 'next'] as const;
+    type State = (typeof STATES)[number];
+
+    function applyStates(currentIdx: number) {
+      slides.forEach((el, i) => {
+        const rel = ((i - currentIdx) % N + N) % N;
+        let s: State = 'previous';
+        if (rel === 0) s = 'current';
+        else if (rel === 1) s = 'next';
+        el.dataset.state = s;
+        bgs[i].dataset.state = s;
+      });
+      slides.forEach((el) => {
+        const v = el.querySelector<HTMLVideoElement>('.vs-face__video');
+        if (!v) return;
+        if (el.dataset.state === 'current') {
+          v.currentTime = 0;
+          v.play().catch(() => {});
+        } else {
+          v.pause();
+          v.currentTime = 0;
+        }
+      });
+    }
+
+    let activeIdx = 0;
+    let auto: number | null = null;
+    let locked = false;
+    const AUTO_MS = 3200;
+
+    // Push the "wrap" card (going across the stage from one side to the other)
+    // behind the others so its transition doesn't visually cut through the
+    // new current card.
+    function applyZIndexes(oldActive: number, newActive: number) {
+      let dir = ((newActive - oldActive) % N + N) % N;
+      if (dir > N / 2) dir -= N;
+      if (Math.abs(dir) !== 1 || N !== 3) return;
+
+      const wrapIdx = dir === 1
+        ? (oldActive - 1 + N) % N
+        : (oldActive + 1) % N;
+      slides.forEach((el, i) => {
+        if (i === wrapIdx)        el.style.zIndex = '5';   // hidden behind
+        else if (i === newActive) el.style.zIndex = '20';  // becoming center
+        else                      el.style.zIndex = '30';  // becoming new side, in front
+      });
+    }
+
+    function go(delta: number) {
+      const oldActive = activeIdx;
+      activeIdx = ((activeIdx + delta) % N + N) % N;
+      applyZIndexes(oldActive, activeIdx);
+      applyStates(activeIdx);
+    }
+    function startAuto() {
+      stopAuto();
+      if (locked) return;
+      auto = window.setInterval(() => go(1), AUTO_MS);
+    }
+    function stopAuto() {
+      if (auto !== null) { clearInterval(auto); auto = null; }
+    }
+    function setOpen(idx: number | null) {
+      slides.forEach((el, i) => {
+        if (idx !== null && i === idx) el.dataset.open = 'true';
+        else delete el.dataset.open;
+      });
+    }
+    function lock(idx: number) {
+      const oldActive = activeIdx;
+      applyZIndexes(oldActive, idx);
+      activeIdx = idx;
+      applyStates(activeIdx);
+      setOpen(idx);
+      locked = true;
+      stopAuto();
+      stage!.dataset.locked = 'true';
+    }
+    function unlock() {
+      locked = false;
+      setOpen(null);
+      delete stage!.dataset.locked;
+      startAuto();
+    }
+
+    // ====== Drag-to-rotate ======
+    const DRAG_THRESHOLD = 60;
+    let dragStartX = 0;
+    let dragCurrentX = 0;
+    let dragging = false;
+    let dragMoved = false;
+
+    function dragStart(x: number) {
+      dragging = true;
+      dragMoved = false;
+      dragStartX = x;
+      dragCurrentX = x;
+      stage!.classList.add('vs-dragging');
+      stopAuto();
+    }
+    function dragMove(x: number) {
+      if (!dragging) return;
+      dragCurrentX = x;
+      if (Math.abs(dragCurrentX - dragStartX) > 6) dragMoved = true;
+      const dx = dragCurrentX - dragStartX;
+      stage!.style.setProperty('--vs-drag-skew', `${Math.max(-8, Math.min(8, dx / 30))}deg`);
+    }
+    function dragEnd() {
+      if (!dragging) return;
+      const dx = dragCurrentX - dragStartX;
+      dragging = false;
+      stage!.classList.remove('vs-dragging');
+      stage!.style.setProperty('--vs-drag-skew', '0deg');
+      if (Math.abs(dx) < DRAG_THRESHOLD) { startAuto(); return; }
+      if (locked) unlock();
+      if (dx <= -DRAG_THRESHOLD)      go(1);
+      else if (dx >= DRAG_THRESHOLD)  go(-1);
+      startAuto();
+    }
+
+    stage.addEventListener('mousedown', (e) => {
+      dragStart(e.clientX);
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => dragMove(e.clientX));
+    window.addEventListener('mouseup', dragEnd);
+    window.addEventListener('mouseleave', dragEnd);
+
+    stage.addEventListener('touchstart', (e) => dragStart(e.touches[0].clientX), { passive: true });
+    stage.addEventListener('touchmove',  (e) => dragMove(e.touches[0].clientX),  { passive: true });
+    stage.addEventListener('touchend',   dragEnd);
+    stage.addEventListener('touchcancel', dragEnd);
+
+    // ====== Click: side card locks; current toggles unlock; CTA navigates ======
+    slides.forEach((el, i) => {
+      el.addEventListener('click', (e) => {
+        if (dragMoved) { e.preventDefault(); dragMoved = false; return; }
+        if ((e.target as HTMLElement).closest('.vs-face__cta')) return;
+        // Same card already open → close it.
+        if (i === activeIdx && locked) { unlock(); return; }
+        // Any other click (side card OR center when closed) → lock + open.
+        lock(i);
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!stage!.contains(e.target as Node) && locked) unlock();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && locked) unlock();
+    });
+
+    // Auto-rotation keeps running on hover too (so the 3D loop stays alive).
+    // Only stops while a card is open/locked or during an active drag.
+
+    // ====== Tilt on mousemove ======
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    type TiltState = { rx: number; ry: number; targetRx: number; targetRy: number };
+    const tiltStates: TiltState[] = slides.map(() => ({ rx: 0, ry: 0, targetRx: 0, targetRy: 0 }));
+
+    slides.forEach((el, i) => {
+      el.addEventListener('mousemove', (e) => {
+        const rect = el.getBoundingClientRect();
+        const ox = (e.clientX - rect.left - rect.width  * 0.5) / (Math.PI * 4);
+        const oy = -(e.clientY - rect.top  - rect.height * 0.5) / (Math.PI * 5);
+        tiltStates[i].targetRx = oy;
+        tiltStates[i].targetRy = ox;
+      });
+      el.addEventListener('mouseleave', () => {
+        tiltStates[i].targetRx = 0;
+        tiltStates[i].targetRy = 0;
+      });
+    });
+
+    function tiltTick() {
+      tiltStates.forEach((s, i) => {
+        s.rx = lerp(s.rx, s.targetRx, 0.12);
+        s.ry = lerp(s.ry, s.targetRy, 0.12);
+        const inner = slides[i].querySelector<HTMLElement>('.vs-slide__inner');
+        if (inner) {
+          inner.style.setProperty('--rx', s.rx.toFixed(2) + 'deg');
+          inner.style.setProperty('--ry', s.ry.toFixed(2) + 'deg');
+        }
+      });
+      requestAnimationFrame(tiltTick);
+    }
+    requestAnimationFrame(tiltTick);
+
+    applyStates(activeIdx);
+    startAuto();
+  }
+</script>

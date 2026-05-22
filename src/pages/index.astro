@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import HomeAboutBrief from '../components/HomeAboutBrief.astro';
 import SkillsGrid from '../components/SkillsGrid.astro';
-import HomeProjectsMarquee from '../components/HomeProjectsMarquee.astro';
+import HomeProjectsCarousel from '../components/HomeProjectsCarousel.astro';
 import HomeContactCTA from '../components/HomeContactCTA.astro';
 
 const lang = 'es' as const;
@@ -12,7 +12,7 @@ const lang = 'es' as const;
 <Layout title="Pedro Erin Diaz Cumes — Software Engineer" lang={lang}>
   <Hero lang={lang} />
   <HomeAboutBrief lang={lang} />
-  <HomeProjectsMarquee lang={lang} />
+  <HomeProjectsCarousel lang={lang} />
   <SkillsGrid lang={lang} />
   <HomeContactCTA lang={lang} />
 </Layout>
