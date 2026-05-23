@@ -395,15 +395,55 @@ const slideStates = ['current', 'next', 'previous'] as const;
   .vs-face__cta:hover svg { transform: translateX(2px); }
   .vs-face__cta svg { transition: transform 200ms ease; }
 
-  /* Mobile tweaks */
-  @media (max-width: 720px) {
+  /* Tablet */
+  @media (max-width: 900px) {
+    .vs-stage {
+      --slide-w: clamp(220px, 36vw, 320px);
+      --slide-h: clamp(380px, 52vh, 500px);
+      height: clamp(580px, 78vh, 720px);
+    }
+    .vs-slide[data-state="next"]     { --slide-tx: calc(var(--slide-w) *  0.75); --slide-roty: -36deg; }
+    .vs-slide[data-state="previous"] { --slide-tx: calc(var(--slide-w) * -0.75); --slide-roty: 36deg; }
+    .vs-bg::after { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  }
+
+  /* Phone */
+  @media (max-width: 600px) {
+    .vs-stage {
+      --slide-w: 62vw;
+      --slide-h: 440px;
+      height: 600px;
+      border-radius: 16px;
+    }
+    .vs-slide[data-state="current"]  { --slide-scale: 1.05; --slide-tz: 40px; }
+    .vs-slide[data-state="next"]     { --slide-tx: calc(var(--slide-w) *  0.6); --slide-roty: -28deg; }
+    .vs-slide[data-state="previous"] { --slide-tx: calc(var(--slide-w) * -0.6); --slide-roty: 28deg; }
+    .vs-bg::after { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+    /* Tighter face content */
+    .vs-face--top .vs-face__content { padding: 0.7rem 0.8rem; gap: 0.15rem; }
+    .vs-face--bottom .vs-face__content { padding: 0.9rem 0.9rem 1rem; gap: 0.45rem; }
+    .vs-face__title { font-size: 1.05rem; }
+    .vs-face__subtitle { font-size: 0.72rem; }
+    .vs-face__desc { font-size: 0.78rem; -webkit-line-clamp: 3; line-height: 1.4; }
+    .vs-face__cta { font-size: 0.78rem; padding: 0.35rem 0.6rem; }
+  }
+
+  /* Very small phones — flatter angles */
+  @media (max-width: 380px) {
     .vs-stage {
       --slide-w: 70vw;
-      --slide-h: 480px;
-      height: 680px;
+      --slide-h: 400px;
+      height: 560px;
     }
-    .vs-slide[data-state="next"]     { --slide-tx: calc(var(--slide-w) *  0.85); --slide-roty: -30deg; }
-    .vs-slide[data-state="previous"] { --slide-tx: calc(var(--slide-w) * -0.85); --slide-roty: 30deg; }
+    .vs-slide[data-state="next"]     { --slide-tx: calc(var(--slide-w) *  0.5); --slide-roty: -22deg; }
+    .vs-slide[data-state="previous"] { --slide-tx: calc(var(--slide-w) * -0.5); --slide-roty: 22deg; }
+  }
+
+  /* Coarse pointers: kill tilt-on-mousemove + heavier blur */
+  @media (hover: none) and (pointer: coarse) {
+    .vs-slide__inner { transition: none; }
+    .vs-bg::after { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -573,38 +613,41 @@ const slideStates = ['current', 'next', 'previous'] as const;
     // Auto-rotation keeps running on hover too (so the 3D loop stays alive).
     // Only stops while a card is open/locked or during an active drag.
 
-    // ====== Tilt on mousemove ======
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-    type TiltState = { rx: number; ry: number; targetRx: number; targetRy: number };
-    const tiltStates: TiltState[] = slides.map(() => ({ rx: 0, ry: 0, targetRx: 0, targetRy: 0 }));
+    // ====== Tilt on mousemove (desktop only) ======
+    const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (isFinePointer) {
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      type TiltState = { rx: number; ry: number; targetRx: number; targetRy: number };
+      const tiltStates: TiltState[] = slides.map(() => ({ rx: 0, ry: 0, targetRx: 0, targetRy: 0 }));
 
-    slides.forEach((el, i) => {
-      el.addEventListener('mousemove', (e) => {
-        const rect = el.getBoundingClientRect();
-        const ox = (e.clientX - rect.left - rect.width  * 0.5) / (Math.PI * 4);
-        const oy = -(e.clientY - rect.top  - rect.height * 0.5) / (Math.PI * 5);
-        tiltStates[i].targetRx = oy;
-        tiltStates[i].targetRy = ox;
+      slides.forEach((el, i) => {
+        el.addEventListener('mousemove', (e) => {
+          const rect = el.getBoundingClientRect();
+          const ox = (e.clientX - rect.left - rect.width  * 0.5) / (Math.PI * 4);
+          const oy = -(e.clientY - rect.top  - rect.height * 0.5) / (Math.PI * 5);
+          tiltStates[i].targetRx = oy;
+          tiltStates[i].targetRy = ox;
+        });
+        el.addEventListener('mouseleave', () => {
+          tiltStates[i].targetRx = 0;
+          tiltStates[i].targetRy = 0;
+        });
       });
-      el.addEventListener('mouseleave', () => {
-        tiltStates[i].targetRx = 0;
-        tiltStates[i].targetRy = 0;
-      });
-    });
 
-    function tiltTick() {
-      tiltStates.forEach((s, i) => {
-        s.rx = lerp(s.rx, s.targetRx, 0.12);
-        s.ry = lerp(s.ry, s.targetRy, 0.12);
-        const inner = slides[i].querySelector<HTMLElement>('.vs-slide__inner');
-        if (inner) {
-          inner.style.setProperty('--rx', s.rx.toFixed(2) + 'deg');
-          inner.style.setProperty('--ry', s.ry.toFixed(2) + 'deg');
-        }
-      });
+      function tiltTick() {
+        tiltStates.forEach((s, i) => {
+          s.rx = lerp(s.rx, s.targetRx, 0.12);
+          s.ry = lerp(s.ry, s.targetRy, 0.12);
+          const inner = slides[i].querySelector<HTMLElement>('.vs-slide__inner');
+          if (inner) {
+            inner.style.setProperty('--rx', s.rx.toFixed(2) + 'deg');
+            inner.style.setProperty('--ry', s.ry.toFixed(2) + 'deg');
+          }
+        });
+        requestAnimationFrame(tiltTick);
+      }
       requestAnimationFrame(tiltTick);
     }
-    requestAnimationFrame(tiltTick);
 
     applyStates(activeIdx);
     startAuto();
